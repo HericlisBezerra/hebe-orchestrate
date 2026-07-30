@@ -1,0 +1,14 @@
+{
+  "name": "hebe-orchestrator",
+  "owner": {
+    "name": "HeBeDigital"
+  },
+  "plugins": [
+    {
+      "name": "hebe-orchestrator",
+      "source": "./hebe-orchestrator",
+      "description": "Orquestração multi-modelo qualidade-primeiro no Claude Code: cada tarefa no modelo certo pela natureza dela — mecânico→Haiku 4.5, código especificado→Sonnet 5, dev complexo→Opus 5, design e revisão→Fable 5, decisão difícil→Opus 5.",
+      "version": "0.4.0"
+    }
+  ]
+}

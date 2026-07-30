@@ -1,0 +1,9 @@
+{
+  "name": "hebe-orchestrator",
+  "description": "Orquestração multi-modelo qualidade-primeiro no Claude Code: cada tarefa no modelo certo pela natureza dela — mecânico→Haiku 4.5, código especificado→Sonnet 5, dev complexo→Opus 5, design e revisão→Fable 5, decisão difícil→Opus 5. Economiza sem rebaixar o que exige julgamento.",
+  "version": "0.4.0",
+  "author": {
+    "name": "HeBeDigital"
+  },
+  "keywords": ["orchestration", "quality", "cost", "subagents", "multi-model", "vibe-coding"]
+}
