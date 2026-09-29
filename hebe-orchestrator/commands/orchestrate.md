@@ -22,7 +22,7 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | **Orquestração mista** | Frentes de naturezas diferentes (mecânico + código + design + revisão + decisão) | Cada frente no seu nível (seção 3), esforço por frente |
 
 - O Sonnet 5.5 e o Opus 5.5 resolvem sozinhos muita tarefa grande. **Não divida entre modelos o que um modelo só faz bem** — cada handoff custa contexto e latência.
-- O alias `sonnet` é resolvido pelo app: até ele ser atualizado, roda o **Sonnet 5**, não o 5.5. Reporte o modelo que rodou de fato.
+- O alias `sonnet` é resolvido pelo app: a partir do Claude Code 2.1.284 roda o **Sonnet 5.5**; em versões anteriores roda o Sonnet 5. Reporte o modelo que rodou de fato.
 - Mesmo no solo, **quem constrói não revisa**: se a tarefa toca risco (segurança, dinheiro, permissão, dados), feche com uma etapa de revisão num modelo diferente do construtor.
 - Diga a estratégia escolhida e o porquê numa linha no plano.
 

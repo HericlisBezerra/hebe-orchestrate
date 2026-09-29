@@ -22,7 +22,7 @@ disable-model-invocation: true
 | Decisão difícil, arquitetura, trade-off, veredito final de alto risco | `@advisor` | Opus 5.5 | xhigh · max no veredito |
 | Planejamento de alto nível, costura entre peças, revisão final | sessão principal | Opus 5.5 | xhigh |
 
-¹ Os agentes usam **alias** (`haiku`, `sonnet`, `opus`, `fable`), resolvido pelo Claude Code embutido no app. Em 2026-09-29 (Claude Code 2.1.281) o `sonnet` ainda resolve para o **Sonnet 5**; vira Sonnet 5.5 quando o app for atualizado. Confira com `/model` antes de afirmar qual modelo rodou.
+¹ Os agentes usam **alias** (`haiku`, `sonnet`, `opus`, `fable`), resolvido pelo Claude Code embutido no app. Verificado em 2026-09-29 no Claude Code 2.1.284: `sonnet` → Sonnet 5.5 (`claude-sonnet-5-5`), `opus` → Opus 5.5, `fable` → Fable 5.1, `haiku` → Haiku 4.5; nas versões até a 2.1.281 o `sonnet` ainda resolvia para o Sonnet 5. No app o esforço padrão do Sonnet 5.5 é `medium`. Confira com `/model` antes de afirmar qual modelo rodou.
 
 > **Preço de referência** (dólares por milhão de tokens, entrada e saída, set/2026): Haiku 4.5, 1 e 5 · Sonnet 5.5, 2 e 10 · Opus 5.5, 4 e 20 · Fable 5.1, 10 e 50. Subir de Sonnet pra Opus custa 2×, não 5× — o "na dúvida, suba" ficou mais barato. O Opus 5.5 vem com esforço padrão `medium` no app; a sessão principal fica no Extra com `modelSettings.claude-opus-5-5.effortLevel: "xhigh"` (é o que `/effort xhigh` grava).
 
@@ -42,7 +42,7 @@ disable-model-invocation: true
 
 ## ⚠️ Fallback do Fable (crédito semanal)
 
-O comportamento exato do app quando o crédito do Fable acaba **não foi testado**. O Claude Code 2.1.281 traz sinais de substituição automática de modelo e de um aviso para continuar com créditos de uso pagos, então a chamada pode **falhar**, **pedir consentimento** ou **rodar em outro modelo sem erro**. Por isso:
+O comportamento exato do app quando o crédito do Fable acaba **não foi testado**. O Claude Code 2.1.281 e o 2.1.284 trazem sinais de substituição automática de modelo e de um aviso para continuar com créditos de uso pagos, então a chamada pode **falhar**, **pedir consentimento** ou **rodar em outro modelo sem erro**. Por isso:
 
 1. **Confira o modelo que rodou.** Não assuma Fable só porque o frontmatter diz `fable`.
 2. **Se falhou** (indisponibilidade, cota, crédito): reinvoque o MESMO agente com override `opus` — preserva o prompt especializado e só troca o motor. Prefira isso a redirecionar pro `@advisor`.

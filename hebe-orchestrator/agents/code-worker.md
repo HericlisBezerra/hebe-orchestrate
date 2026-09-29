@@ -1,6 +1,6 @@
 ---
 name: code-worker
-description: Implementação especificada, rotina de código e análise — construir do plano, ler, mapear, refatorar, testar, fan-out paralelo. Use quando o QUÊ já está decidido, ou pra entender/mapear um subsistema. Dev complexo/novo ou de correção sutil NÃO é seu — escala pro modelo forte (Opus 5.5) na sessão principal. Piso de confiabilidade de dev (nunca Haiku). Roda em Sonnet (alias `sonnet`: Sonnet 5.5 quando o app estiver atualizado), contexto isolado.
+description: Implementação especificada, rotina de código e análise — construir do plano, ler, mapear, refatorar, testar, fan-out paralelo. Use quando o QUÊ já está decidido, ou pra entender/mapear um subsistema. Dev complexo/novo ou de correção sutil NÃO é seu — escala pro modelo forte (Opus 5.5) na sessão principal. Piso de confiabilidade de dev (nunca Haiku). Roda em Sonnet 5.5 (alias `sonnet` a partir do Claude Code 2.1.284), contexto isolado.
 model: sonnet
 effort: high
 ---

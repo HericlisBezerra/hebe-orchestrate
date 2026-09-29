@@ -103,7 +103,7 @@ Ele planeja, passa o plano pelo portão do Jev (ou pela sua aprovação, se o Je
 
 ## Ajuste de modelo
 
-O `settings.example.json` põe a sessão principal (Opus 5.5) em Extra. Copie o `modelSettings` pro `~/.claude/settings.json`. Os `model:` dos subagents usam **alias** (`opus`, `sonnet`, `fable`, `haiku`) — assim cada agente roda sempre no modelo **mais atual** da sua família, sem precisar bumpar quando sair versão nova. Quem resolve o alias é o Claude Code embutido no app: o `sonnet` passa a ser o Sonnet 5.5 quando o app se atualizar. `design-worker` e `reviewer` rodam em Fable. **Não há fallback automático de modelo no Claude Code** — quando o crédito semanal do Fable acaba, a doutrina manda o orquestrador reinvocar o mesmo agente com override para Opus e **avisar você**.
+O `settings.example.json` põe a sessão principal (Opus 5.5) em Extra. Copie o `modelSettings` pro `~/.claude/settings.json`. Os `model:` dos subagents usam **alias** (`opus`, `sonnet`, `fable`, `haiku`) — assim cada agente roda sempre no modelo **mais atual** da sua família, sem precisar bumpar quando sair versão nova. Quem resolve o alias é o Claude Code embutido no app: no 2.1.284 (verificado) `sonnet` → Sonnet 5.5, `opus` → Opus 5.5, `fable` → Fable 5.1. `design-worker` e `reviewer` rodam em Fable. **Não há fallback automático de modelo no Claude Code** — quando o crédito semanal do Fable acaba, a doutrina manda o orquestrador reinvocar o mesmo agente com override para Opus e **avisar você**.
 
 ## Ressalvas honestas
 

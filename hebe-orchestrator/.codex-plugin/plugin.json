@@ -1,6 +1,6 @@
 {
   "name": "hebe-orchestrator",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Orquestração multi-modelo qualidade-primeiro no app Codex: escolhe a estratégia (direto, ultra com um modelo só, ou mista) e, por frente, o modelo (Luna, Sol, Astra; Terra de reserva) e o esforço pela dificuldade, com o Jev aprovando planos de baixo risco, desempatando escolhas reversíveis e decidindo escalar ou aceitar.",
   "author": {
     "name": "HeBeDigital"

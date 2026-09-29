@@ -37,7 +37,7 @@ Then the **effort of each front**, by difficulty: `low`/`medium` for mechanical 
 
 `gpt-5.6-terra` is the Codex fallback for Sol (there is no GPT-6 Terra). Full matrix, model particularities and what is still unverified: [`references/hosts.md`](hebe-orchestrator/skills/orchestrator-guide/references/hosts.md).
 
-Models are set by **alias**, never by pinned ID — each agent always runs the newest model of its family that your Claude Code version knows, with no manual bump when a new version ships. As of September 2026 that is Haiku 4.5, Sonnet 5.5, Opus 5.5 and Fable 5.1 (Sonnet 5.5 arrives through the `sonnet` alias once Claude Code is updated).
+Models are set by **alias**, never by pinned ID — each agent always runs the newest model of its family that your Claude Code version knows, with no manual bump when a new version ships. As of September 2026 that is Haiku 4.5, Sonnet 5.5, Opus 5.5 and Fable 5.1.
 
 ## Rules that don't bend
 

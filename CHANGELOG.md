@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1 — 2026-09-29
+
+- **Sonnet 5.5 confirmado no app.** No Claude Code 2.1.284 o alias `sonnet` resolve para `claude-sonnet-5-5`. Conferido no catálogo do app e por três subagentes do plugin, que se identificaram como Sonnet 5.5 (`@code-worker`), Haiku 4.5 (`@worker`) e Opus 5.5 (`@advisor`). Os avisos de "o Sonnet ainda é o 5" saíram da documentação, do comando e do agente.
+- No app, o esforço padrão do Sonnet 5.5 é `medium`. O `@code-worker` continua em `high`, e o esforço de cada frente segue decidido pela tarefa.
+- Nenhuma mudança no Jev nem nas regras.
+
+
 ## 0.5.0 — 2026-09-29
 
 **Estratégia primeiro, esforço por frente.**

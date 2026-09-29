@@ -1,13 +1,13 @@
 # Hosts: Claude e Codex no mesmo modelo de orquestração
 
-A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista), papel pela natureza da tarefa, esforço pela dificuldade de cada frente, Jev nos portões, quem constrói não revisa. O que muda por host é o modelo que ocupa cada papel e a forma de delegar. Observado em **2026-09-29**: catálogo do app Claude (Claude Code 2.1.281) e `models_cache.json` do app Codex (cliente 0.158.0). Catálogos mudam; confira antes de fixar.
+A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista), papel pela natureza da tarefa, esforço pela dificuldade de cada frente, Jev nos portões, quem constrói não revisa. O que muda por host é o modelo que ocupa cada papel e a forma de delegar. Observado em **2026-09-29**: catálogo do app Claude (Claude Code 2.1.284) e `models_cache.json` do app Codex (cliente 0.158.0). Catálogos mudam; confira antes de fixar.
 
 ## Estratégia por host
 
 | Estratégia | Claude (app) | Codex (app) |
 |---|---|---|
 | Direto | sessão principal (Opus 5.5) | root (`gpt-6-sol`) |
-| UltraCode solo — amplo, especificado ou moderado | Workflow com todas as etapas em `sonnet` (alias: Sonnet 5 até o app atualizar, depois Sonnet 5.5) | root `gpt-6-sol` com effort `ultra` (max com delegação) |
+| UltraCode solo — amplo, especificado ou moderado | Workflow com todas as etapas em `sonnet` (alias `sonnet` = Sonnet 5.5 no Claude Code 2.1.284 ou mais novo) | root `gpt-6-sol` com effort `ultra` (max com delegação) |
 | UltraCode solo — amplo e difícil | Workflow com todas as etapas em `opus` (Opus 5.5) | root `gpt-6-astra` com effort `ultra` (xhigh com delegação) — única exceção ao "Astra nunca como root", a pedido do usuário |
 | Orquestração mista | Workflow com `agentType` por papel e esforço por etapa (Agent sem pedido do usuário, com o esforço do frontmatter) | ondas de até 3 `spawn_agent` com `model` e `reasoning_effort` por filho |
 
@@ -73,7 +73,6 @@ spawn_agent{task_name: "review-auth", model: "gpt-6-astra", reasoning_effort: "x
 - O Astra como especialista em design visual não tem fonte oficial; a escolha vem de "na dúvida, suba" e do computer use. Faça A/B contra o Sol antes de fixar.
 - O descarte silencioso do esforço no Haiku 4.5 e a precedência de esforço no Workflow vêm do código do Claude Code, não da documentação.
 - `persistent` como modo de sessão é inferência da pesquisa, sem fonte oficial.
-- O alias `sonnet` do app (Claude Code 2.1.281) ainda resolve para o Sonnet 5; o Sonnet 5.5 chega com a atualização do app.
 - O comportamento do app sem crédito de Fable (falha, consentimento para créditos pagos ou troca automática de modelo) não foi testado.
 - Nenhum nível de esforço foi medido quanto a ganho de qualidade, em nenhum dos hosts.
 
