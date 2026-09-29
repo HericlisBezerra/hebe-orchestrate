@@ -7,3 +7,7 @@ node_modules/
 .env.*
 !.env.example
 *.pat
+
+# python
+__pycache__/
+*.pyc

@@ -22,14 +22,16 @@ value of this plugin is agents refusing work that belongs to another tier.
 ## Changing the doctrine
 
 `hebe-orchestrator/skills/orchestrator-guide/SKILL.md` is the reasoning behind the
-routing table. If you change a rule there, change it in `commands/orchestrate.md` too —
+routing table. If you change a rule there, change it in `commands/orchestrate.md`,
+`skills/orchestrator-guide/references/hosts.md` and `codex-skills/orchestrate/SKILL.md` too —
 they must not disagree.
 
 ## Versioning
 
-Bump `version` in **both** `.claude-plugin/marketplace.json` and
-`hebe-orchestrator/.claude-plugin/plugin.json`. The version bump is what triggers an
-update for existing users; without it, nobody gets your change.
+Bump `version` in `.claude-plugin/marketplace.json`, `hebe-orchestrator/.claude-plugin/plugin.json`
+and `hebe-orchestrator/.codex-plugin/plugin.json`, and add the entry to `CHANGELOG.md`. The version
+bump is what triggers an update for existing users; without it, nobody gets your change.
+`python3 -m unittest discover -s hebe-orchestrator/tests` checks that they agree.
 
 ## Licence
 

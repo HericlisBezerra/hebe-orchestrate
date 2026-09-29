@@ -1,0 +1,35 @@
+{
+  "name": "hebe-orchestrator",
+  "version": "0.5.0",
+  "description": "Orquestração multi-modelo qualidade-primeiro no app Codex: escolhe a estratégia (direto, ultra com um modelo só, ou mista) e, por frente, o modelo (Luna, Sol, Astra; Terra de reserva) e o esforço pela dificuldade, com o Jev aprovando planos de baixo risco, desempatando escolhas reversíveis e decidindo escalar ou aceitar.",
+  "author": {
+    "name": "HeBeDigital"
+  },
+  "keywords": [
+    "orchestration",
+    "multi-model",
+    "multi-host",
+    "codex",
+    "effort",
+    "jev",
+    "typesafe"
+  ],
+  "skills": "./codex-skills/",
+  "interface": {
+    "displayName": "HeBe Orchestrator (multi-host)",
+    "shortDescription": "Modelo e esforço certos por tarefa, com o Jev nos portões",
+    "longDescription": "Mesma doutrina do plugin do Claude Code, com a variável de host Codex: primeiro a estratégia (direto, ultra com um modelo só, ou mista), depois cada frente no modelo certo — mecânico no GPT-6 Luna, código no GPT-6 Sol, julgamento difícil e revisão independente no GPT-6 Astra, GPT-5.6 Terra como reserva — e no esforço decidido pela dificuldade (Extra como ponto de partida do julgamento). O Jev decide só portões reversíveis; mensagem a terceiros, deploy, dinheiro, credenciais e segurança continuam com o usuário.",
+    "developerName": "HeBeDigital",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Planeje esta tarefa, passe o plano pelo portão do Jev e delegue cada frente ao modelo e ao esforço certos."
+    ]
+  },
+  "repository": "https://github.com/HericlisBezerra/hebe-orchestrate",
+  "homepage": "https://github.com/HericlisBezerra/hebe-orchestrate",
+  "license": "MIT"
+}

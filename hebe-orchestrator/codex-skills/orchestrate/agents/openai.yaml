@@ -1,0 +1,7 @@
+interface:
+  display_name: "Orquestrador HeBe (multi-host)"
+  short_description: "Modelo e esforço certos por tarefa, com o Jev nos portões"
+  default_prompt: "Use $orchestrate para planejar esta tarefa, passar o plano pelo portão do Jev e delegar cada frente ao modelo e ao esforço certos."
+
+policy:
+  allow_implicit_invocation: false
