@@ -1,5 +1,18 @@
 # Changelog
 
+## Não lançado (próxima versão) — esforço no Opus 5.5 conforme o guia oficial
+
+Base: *Prompting Claude Opus 5.5* (platform.claude.com, seção "Calibrate effort") e a newsletter Gruponomics "Opus 5.5: como pedir".
+
+- **`medium` é o ponto de partida** no Opus 5.5 (padrão oficial; iguala ou supera o Opus 5 em `high`). `high` para julgamento que já pesa. `xhigh` e `max` só com ganho **medido** na tarefa, e `max` nunca por garantia. Antes, `xhigh` era o ponto de partida de todo trabalho que pensa.
+- No mesmo nível o Opus 5.5 pensa mais por turno que o Opus 5, principalmente em `xhigh` e `max`: o `xhigh` de antes custa mais agora.
+- **Para pensar menos, baixe o esforço** antes de mexer no texto. Proibido "pense com calma / passo a passo" nos prompts de delegação.
+- Prompts de delegação de **construção** ganham o bloco `Decisões fechadas (não reabra)`. Fora de `@reviewer` e `@advisor`, que existem para reexaminar.
+- `@advisor`: `xhigh` → `high` (`max` continua na etapa do veredito de segurança). `@design-worker` e `@reviewer` seguem em `xhigh` no Fable, sem dado oficial para esse modelo.
+- `settings.example.json`: a sessão principal (Opus 5.5) passa de `xhigh` para `medium`.
+- Sonnet 5.5: `@code-worker` continua em `high`. Orientação registrada: `medium` em código bem especificado e curto, `xhigh`/`max` só com ganho medido.
+- Nenhuma mudança no Jev, no Codex nem nas regras de segurança. **Nenhum nível foi medido nesta instalação ainda.**
+
 ## 0.5.1 — 2026-09-29
 
 - **Sonnet 5.5 confirmado no app.** No Claude Code 2.1.284 o alias `sonnet` resolve para `claude-sonnet-5-5`. Conferido no catálogo do app e por três subagentes do plugin, que se identificaram como Sonnet 5.5 (`@code-worker`), Haiku 4.5 (`@worker`) e Opus 5.5 (`@advisor`). Os avisos de "o Sonnet ainda é o 5" saíram da documentação, do comando e do agente.

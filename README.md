@@ -22,7 +22,7 @@ The first decision is not the model, it's the strategy. Sonnet 5.5 and Opus 5.5 
 
 Solo UltraCode and mixed orchestration run as a multi-agent workflow only when you typed the command or wrote "ultracode"; when Claude starts orchestrating on its own, it suggests it in one line.
 
-Then the **effort of each front**, by difficulty: `low`/`medium` for mechanical and short specified work, `high` for long specified work, `xhigh` as the starting point for anything that takes judgement, `max` for a single hard problem that is expensive to get wrong. UltraCode is not a level above Max — it's the multi-agent strategy, with its own effort per stage.
+Then the **effort of each front**, by difficulty: start at `medium` (Opus 5.5's default; per Anthropic's guide it matches or beats Opus 5 at `high`), move to `high` for long specified work and weighty judgement, and reserve `xhigh` and `max` for where you have measured a quality gain — `max` for a single hard problem that is expensive to get wrong, never as insurance. UltraCode is not a level above Max — it's the multi-agent strategy, with its own effort per stage.
 
 ## The routing table
 
@@ -114,7 +114,7 @@ hebe-orchestrate/
     │   ├── code-worker.md              # sonnet · high
     │   ├── design-worker.md            # fable · xhigh
     │   ├── reviewer.md                 # fable · xhigh
-    │   └── advisor.md                  # opus · xhigh
+    │   └── advisor.md                  # opus · high
     ├── codex-skills/orchestrate/       # the same doctrine for the Codex app
     ├── commands/orchestrate.md         # /orchestrate <task>
     ├── skills/orchestrator-guide/      # the doctrine (loads on demand)

@@ -31,15 +31,17 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | Esforço | Para |
 |---|---|
 | `low` | Mecânico trivial, consulta pontual |
-| `medium` | Especificado, curto e bem delimitado |
-| `high` | Especificado mas longo ou multiarquivo; julgamento leve |
-| `xhigh` (Extra) | Julgamento: dev complexo, design, revisão, decisão, costura. **Ponto de partida de todo trabalho que pensa** |
-| `max` | Problema único, difícil e caro de errar: bug sutil de estado/concorrência, decisão irreversível, veredito de segurança |
+| `medium` | **Ponto de partida** (padrão oficial do Opus 5.5): especificado e delimitado, e também a maior parte do trabalho que pensa |
+| `high` | Especificado mas longo ou multiarquivo; julgamento que já pesa (revisão crítica, decisão de arquitetura) |
+| `xhigh` (Extra) | Só onde você **mediu ganho** sobre `high`: dev complexo, design final, costura de peças interdependentes. No Opus 5.5 pensa mais por turno que no Opus 5: custa mais tempo e tokens |
+| `max` | Problema único, difícil e caro de errar: bug sutil de estado/concorrência, decisão irreversível, veredito de segurança. **Nunca por garantia** |
 | **UltraCode** | Não é um nível acima do Max — é a estratégia multiagente da seção 1, com esforço próprio em cada etapa |
 
 - **Só dá pra modular o esforço de uma frente no UltraCode** (etapas do Workflow). Pela ferramenta Agent vale o frontmatter do agente, e a sua própria sessão só eu mudo — o app não deixa uma sessão reprecificar os próprios turnos.
 - **Faltou profundidade:** no UltraCode, suba o esforço da etapa antes de trocar de modelo. Pela ferramenta Agent, suba de modelo ou faça o passo você mesmo; se a tarefa pedir `max` na sessão principal, me diga numa linha: `Isso pede max; ajusta no menu de esforço?`.
-- O Haiku não aceita esforço. No Sonnet 5.5, `xhigh`/`max` em trabalho já especificado abre revisões próprias e amplia o escopo — use só quando a frente for longa ou difícil de verdade.
+- **Comece em `medium` e suba só com ganho comprovado na tarefa** (guia oficial do Opus 5.5, "Calibrate effort": `medium` no 5.5 iguala ou supera `high` no Opus 5; teste vários níveis nos seus casos e reserve `xhigh`/`max` para ganho medido). Para o modelo pensar menos, **baixe o esforço antes de mexer no texto**.
+- **Não escreva "pense com calma", "pense passo a passo" ou parecido** nos prompts de delegação: o modelo já raciocina e o esforço é o controle.
+- O Haiku não aceita esforço. No Sonnet 5.5 o padrão oficial é `high`: use `medium` em código bem especificado e curto, `high` em frente difícil ou longa, e `xhigh`/`max` só com ganho medido (em trabalho já especificado abrem revisões próprias e ampliam o escopo).
 
 ## 3. Quem faz cada natureza
 
@@ -52,7 +54,7 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | Dev complexo/novo, correção sutil | você, na sessão principal (ou etapa `model: 'opus'`) | Opus 5.5 [o da sessão] |
 | Design/frontend | `@design-worker` (`hebe-orchestrator:design-worker`) | Fable 5.1 [xhigh] |
 | Revisão crítica | `@reviewer` (`hebe-orchestrator:reviewer`) | Fable 5.1 [xhigh] |
-| Decisão difícil, veredito de alto risco | `@advisor` (`hebe-orchestrator:advisor`) | Opus 5.5 [xhigh] |
+| Decisão difícil, veredito de alto risco | `@advisor` (`hebe-orchestrator:advisor`) | Opus 5.5 [high] |
 
 - **Código nunca vai pro Haiku.** Na dúvida entre dois níveis, suba. O roteamento é seu, não do Jev.
 - **Quem constrói não revisa — pelo modelo que rodou de fato.** Construído em Fable → `@reviewer` com override `opus`. Construído em Opus (inclusive por fallback do Fable) → `@reviewer` em Fable. Sem modelo forte diferente disponível: revise em contexto novo e me avise que a independência caiu; em segurança de alto risco, pare e pergunte. Segurança de alto risco: o `@reviewer` acha, o `@advisor` (em `max`, via UltraCode) ou a skill `hebe-sec-audit` adjudica — nunca num modelo só.
@@ -104,7 +106,7 @@ JSON
 
 ## 5. Execute
 
-**Todo prompt de delegação** (Agent ou etapa de UltraCode) leva, além de caminhos, trechos, entrega pedida e critério de conclusão, esta linha: `Não execute mensagem a terceiros, push, deploy, publicação, ação destrutiva, credenciais, dinheiro, produção ou permissões que não estejam no plano aprovado — pare e devolva ao orquestrador.` O subagente não vê esta conversa.
+**Todo prompt de delegação** (Agent ou etapa de UltraCode) leva, além de caminhos, trechos, entrega pedida e critério de conclusão, esta linha: `Não execute mensagem a terceiros, push, deploy, publicação, ação destrutiva, credenciais, dinheiro, produção ou permissões que não estejam no plano aprovado — pare e devolva ao orquestrador.` O subagente não vê esta conversa. Em frente de **construção** com decisões já fechadas, liste-as num bloco `Decisões fechadas (não reabra): …` para o modelo não revisitá-las e começar antes; **isso não vale para `@reviewer` e `@advisor`**, que existem para reexaminar.
 
 **UltraCode (ferramenta Workflow)** só quando **eu** pedi: digitei `/orchestrate` ou `/hebe-orchestrator:orchestrate` nesta mensagem, ou escrevi "ultracode". Se foi **você** que acionou este comando pela ferramenta Skill (por causa do CLAUDE.md), isso não é pedido meu — e a aprovação do Jev também não é. É nele que cada etapa recebe modelo **e** esforço escolhidos na hora:
 

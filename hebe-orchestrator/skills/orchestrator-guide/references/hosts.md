@@ -17,11 +17,11 @@ A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista)
 |---|---|---|
 | Mecânico | `@worker` · Haiku 4.5 · sem esforço | `gpt-6-luna` · high |
 | Código especificado / análise | `@code-worker` · Sonnet 5.5 · high (xhigh em frente longa) | `gpt-6-sol` · high (xhigh em frente longa) |
-| Dev complexo | sessão principal · Opus 5.5 · xhigh (max em problema único) | root `gpt-6-sol` · xhigh (max em problema único); `gpt-6-astra` no mais difícil de ponta a ponta |
+| Dev complexo | sessão principal · Opus 5.5 · medium (high/xhigh com ganho comprovado; max em problema único) | root `gpt-6-sol` · xhigh (max em problema único); `gpt-6-astra` no mais difícil de ponta a ponta |
 | Design / frontend | `@design-worker` · Fable 5.1 · xhigh | `gpt-6-astra` · xhigh (fallback `gpt-6-sol`) |
 | Revisão crítica | `@reviewer` · Fable 5.1 · xhigh (`opus` se o construtor foi Fable) | o modelo forte que **não** construiu · xhigh · `fork_turns: "none"` |
-| Decisão difícil / veredito | `@advisor` · Opus 5.5 · xhigh (max no veredito) | `gpt-6-astra` · xhigh; veredito de alto risco em max com o forte que não achou |
-| Planejamento / costura | sessão principal · Opus 5.5 · xhigh | root `gpt-6-sol` · xhigh |
+| Decisão difícil / veredito | `@advisor` · Opus 5.5 · high (max no veredito) | `gpt-6-astra` · xhigh; veredito de alto risco em max com o forte que não achou |
+| Planejamento / costura | sessão principal · Opus 5.5 · medium | root `gpt-6-sol` · xhigh |
 | Portões (Jev) | `scripts/jev_decide.py` | o mesmo script — não depende de host |
 
 No Claude, o UltraCode (ferramenta Workflow) só roda quando o usuário digitou o comando ou escreveu "ultracode"; quando o Claude aciona a orquestração sozinho, ele sugere numa linha.

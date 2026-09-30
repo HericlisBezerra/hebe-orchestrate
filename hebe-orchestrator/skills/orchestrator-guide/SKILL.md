@@ -16,11 +16,11 @@ disable-model-invocation: true
 |---|---|---|---|
 | Mecânico puro, zero julgamento — grep, renomear, edição já ditada, mover, rodar comando/checagem | `@worker` | Haiku 4.5 | — (não aceita) |
 | **Implementação especificada + análise de código** — construir do plano, ler, mapear, refatorar, testar, fan-out paralelo | `@code-worker` | Sonnet 5.5¹ | medium–high · xhigh em frente longa |
-| **Desenvolvimento complexo/novo** — lógica não-trivial, correção sutil, código guiado por raciocínio | sessão principal | Opus 5.5 | xhigh · max em problema único |
+| **Desenvolvimento complexo/novo** — lógica não-trivial, correção sutil, código guiado por raciocínio | sessão principal | Opus 5.5 | medium para começar · high/xhigh com ganho comprovado · max em problema único |
 | **Design/frontend** — design system, protótipo, UI/UX, layout, identidade, copy, implementação visual | `@design-worker` | Fable 5.1 | xhigh |
 | **Revisar criticamente** — code review, caçar falhas de segurança, crítica de frontend/UX | `@reviewer` | Fable 5.1 | xhigh |
-| Decisão difícil, arquitetura, trade-off, veredito final de alto risco | `@advisor` | Opus 5.5 | xhigh · max no veredito |
-| Planejamento de alto nível, costura entre peças, revisão final | sessão principal | Opus 5.5 | xhigh |
+| Decisão difícil, arquitetura, trade-off, veredito final de alto risco | `@advisor` | Opus 5.5 | high · max no veredito |
+| Planejamento de alto nível, costura entre peças, revisão final | sessão principal | Opus 5.5 | medium · high se a costura for densa |
 
 ¹ Os agentes usam **alias** (`haiku`, `sonnet`, `opus`, `fable`), resolvido pelo Claude Code embutido no app. Verificado em 2026-09-29 no Claude Code 2.1.284: `sonnet` → Sonnet 5.5 (`claude-sonnet-5-5`), `opus` → Opus 5.5, `fable` → Fable 5.1, `haiku` → Haiku 4.5; nas versões até a 2.1.281 o `sonnet` ainda resolvia para o Sonnet 5. No app o esforço padrão do Sonnet 5.5 é `medium`. Confira com `/model` antes de afirmar qual modelo rodou.
 
@@ -71,20 +71,20 @@ Mesmo no solo, **quem constrói não revisa**: tarefa que toca segurança, dinhe
 | Esforço | Para |
 |---|---|
 | `low` | Mecânico trivial, consulta pontual |
-| `medium` | Especificado, curto e bem delimitado |
-| `high` | Especificado mas longo ou multiarquivo; julgamento leve |
-| `xhigh` (Extra) | Julgamento — dev complexo, design, revisão, decisão, costura. Ponto de partida de todo trabalho que pensa |
-| `max` | Problema único, difícil e caro de errar. Paralelismo não ajuda |
+| `medium` | **Ponto de partida** (padrão oficial do Opus 5.5): especificado e delimitado, e a maior parte do trabalho que pensa |
+| `high` | Especificado mas longo ou multiarquivo; julgamento que já pesa (revisão crítica, decisão de arquitetura) |
+| `xhigh` (Extra) | Só onde você mediu ganho sobre `high` — dev complexo, design final, costura de peças interdependentes. No Opus 5.5 pensa mais por turno que no Opus 5 |
+| `max` | Problema único, difícil e caro de errar. Paralelismo não ajuda. Nunca por garantia |
 
 **Ultra/UltraCode não é um nível acima do Max** — é a estratégia multiagente, com esforço próprio em cada etapa. Em tarefa única, o teto é Max.
 
-- **Onde dá pra modular:** no Claude, só nas etapas do Workflow (`agent(p, {model, effort})`). A ferramenta Agent não aceita esforço por chamada — vale o frontmatter (`@code-worker` high; `@design-worker`, `@reviewer`, `@advisor` xhigh; `@worker` sem). No Codex, em cada `spawn_agent` (`reasoning_effort`).
+- **Onde dá pra modular:** no Claude, só nas etapas do Workflow (`agent(p, {model, effort})`). A ferramenta Agent não aceita esforço por chamada — vale o frontmatter (`@code-worker` high; `@advisor` high; `@design-worker` e `@reviewer` xhigh no Fable — ver LOCAL-OVERRIDE quando o Fable estiver desativado; `@worker` sem). No Codex, em cada `spawn_agent` (`reasoning_effort`).
 - **Faltou profundidade:** no Workflow, suba o esforço da etapa antes de trocar de modelo. Pela ferramenta Agent isso não existe — suba de modelo, ou faça o passo você mesmo e peça ao usuário `/effort max` se precisar.
 - O Haiku 4.5 não aceita esforço. No Sonnet 5.5, `xhigh`/`max` em trabalho já especificado abre revisões próprias e amplia o escopo — reserve pra frente longa ou difícil de verdade.
 - **O esforço da sessão principal só o usuário muda** (o app recusa que uma sessão reprecifique os próprios turnos). O `/orchestrate` mostra o nível atual e, quando a tarefa pedir outro, pede numa linha.
 - **Não ligue o `ultracode` global:** na versão atual ele trava a sessão em xhigh (Max indisponível) e transforma toda tarefa em workflow. **Não use `CLAUDE_CODE_EFFORT_LEVEL`:** ele passa por cima do esforço de todos os agentes.
 
-> Nenhum nível foi medido quanto a ganho de qualidade nesta instalação. A tabela é ponto de partida combinando a documentação com a preferência do usuário (Extra no julgamento). Meça antes de prometer. Matriz completa por host: [references/hosts.md](references/hosts.md).
+> Base: guia oficial *Prompting Claude Opus 5.5* ("Calibrate effort") — começar em `medium`, testar vários níveis nos seus próprios casos e reservar `xhigh`/`max` para ganho medido; pensar menos = baixar o esforço, não pedir por texto; nada de "pense com calma" nos prompts. Sonnet 5.5: padrão oficial `high`; `medium` em código bem especificado. Nenhum nível foi medido ainda nesta instalação: meça antes de prometer. Matriz completa por host: [references/hosts.md](references/hosts.md).
 
 ## ⚡ Jev: decisões assertivas pra ninguém ficar parado
 

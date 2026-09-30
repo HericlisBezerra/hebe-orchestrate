@@ -13,7 +13,7 @@ hebe-orchestrator/
 │   ├── code-worker.md           # sonnet (Sonnet 5.5) · high    → implementação especificada + análise
 │   ├── design-worker.md         # fable (Fable 5.1) · xhigh     → design system, protótipo, UI/UX, frontend
 │   ├── reviewer.md              # fable (Fable 5.1) · xhigh     → code review, falhas de segurança, crítica de frontend
-│   └── advisor.md               # opus (Opus 5.5) · xhigh       → decisão difícil, veredito de segurança (max)
+│   └── advisor.md               # opus (Opus 5.5) · high         → decisão difícil, veredito de segurança (max)
 ├── skills/
 │   └── orchestrator-guide/
 │       ├── SKILL.md             # doutrina · disable-model-invocation (custo ZERO até chamar)
@@ -80,7 +80,7 @@ A primeira decisão do `/orchestrate` é a **estratégia**:
 - **UltraCode solo** — tarefa grande e divisível, frentes da mesma natureza: todas as etapas no mesmo modelo, Sonnet 5.5 pro especificado/moderado ou Opus 5.5 pro difícil. Não divide entre modelos o que um modelo só faz bem.
 - **Orquestração mista** — frentes de naturezas diferentes: cada uma no seu nível (Haiku, Sonnet, Opus, Fable).
 
-Depois, o **esforço de cada frente** pela dificuldade: `low`/`medium` pro mecânico e especificado curto, `high` pro especificado longo, `xhigh` (Extra) como ponto de partida de todo julgamento, `max` pro problema único e caro de errar. UltraCode não é um nível acima do Max — é a estratégia multiagente, com esforço próprio em cada etapa.
+Depois, o **esforço de cada frente** pela dificuldade: comece em `medium` (padrão do Opus 5.5, que segundo o guia da Anthropic iguala ou supera o Opus 5 em `high`), `high` pro especificado longo e o julgamento que já pesa, e reserve `xhigh` (Extra) e `max` para onde você mediu ganho — `max` pro problema único e caro de errar, nunca por garantia. UltraCode não é um nível acima do Max — é a estratégia multiagente, com esforço próprio em cada etapa.
 
 Onde isso é modulável: nas etapas do UltraCode (Workflow), cada uma com modelo e esforço escolhidos na hora — e o UltraCode só roda quando você digita `/orchestrate` ou escreve "ultracode"; quando o Claude aciona a orquestração sozinho, ele sugere numa linha. Pela ferramenta Agent vale o frontmatter (`@code-worker` high; `@design-worker`, `@reviewer`, `@advisor` xhigh; `@worker` sem, porque o Haiku não aceita). A sessão principal só você muda — o app não deixa uma sessão reprecificar os próprios turnos; o orquestrador lê o nível atual e pede o ajuste numa linha quando precisar. O Opus 5.5 vem em `medium` por padrão no app: o `settings.example.json` o coloca em Extra. **Não ligue o `ultracode` global** — na versão atual ele trava a sessão em xhigh (Max indisponível) e transforma toda tarefa em workflow.
 
