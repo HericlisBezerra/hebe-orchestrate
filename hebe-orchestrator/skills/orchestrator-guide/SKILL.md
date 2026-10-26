@@ -1,10 +1,12 @@
 ---
 name: orchestrator-guide
-description: Doutrina de orquestração multi-modelo qualidade-primeiro no Claude Code — primeiro a estratégia (direto, UltraCode com um modelo só, ou mista), depois cada frente no modelo certo pela natureza dela (mecânico→Haiku, código especificado→Sonnet, dev complexo e decisão→Opus, design e revisão→Fable) e no esforço certo pela dificuldade, revisando o output antes de confiar e usando o Jev pra não parar em decisão que não é do usuário. Invoque ao planejar uma tarefa longa/composta.
+description: Doutrina de orquestração multi-modelo qualidade-primeiro no Claude Code — primeiro a estratégia (direto, UltraCode com um modelo só, ou mista), depois cada frente no modelo certo pela natureza dela (mecânico→Haiku, código especificado→Sonnet, dev complexo e decisão→Opus, design e revisão→Opus enquanto o Fable estiver desativado) e no esforço certo pela dificuldade, revisando o output antes de confiar e usando o Jev pra não parar em decisão que não é do usuário. Invoque ao planejar uma tarefa longa/composta.
 disable-model-invocation: true
 ---
 
 # Orquestração multi-modelo — doutrina qualidade-primeiro
+
+> 🔒 **Branch experimental `for-claude+gpt` — até segunda ordem do usuário: o Fable está DESATIVADO.** O Opus 5.5 está mais eficiente que o Fable para este uso, então **nada é roteado para Fable**: `@design-worker` e `@reviewer` rodam em Opus 5.5 (esforço padrão `medium` no design e `high` na revisão, pelo guia oficial do Opus 5.5). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Estado da branch experimental `for-claude+gpt`; para reativar o Fable, use a branch `main` ou a seção "Reativar o Fable" da skill `orchestrator-guide`.
 
 **Objetivo:** a MELHOR qualidade possível em cada peça da tarefa, gastando o mínimo que essa qualidade permite. Economia vem de **não desperdiçar o modelo topo em trabalho genuinamente mecânico** — NUNCA de rebaixar trabalho que exige julgamento. Velocidade vem de **não orquestrar o que um modelo só resolve** e de não parar pra perguntar o que o Jev decide com segurança.
 
@@ -17,10 +19,12 @@ disable-model-invocation: true
 | Mecânico puro, zero julgamento — grep, renomear, edição já ditada, mover, rodar comando/checagem | `@worker` | Haiku 4.5 | — (não aceita) |
 | **Implementação especificada + análise de código** — construir do plano, ler, mapear, refatorar, testar, fan-out paralelo | `@code-worker` | Sonnet 5.5¹ | medium–high · xhigh em frente longa |
 | **Desenvolvimento complexo/novo** — lógica não-trivial, correção sutil, código guiado por raciocínio | sessão principal | Opus 5.5 | medium para começar · high/xhigh com ganho comprovado · max em problema único |
-| **Design/frontend** — design system, protótipo, UI/UX, layout, identidade, copy, implementação visual | `@design-worker` | Fable 5.1 | xhigh |
-| **Revisar criticamente** — code review, caçar falhas de segurança, crítica de frontend/UX | `@reviewer` | Fable 5.1 | xhigh |
+| **Design/frontend** — design system, protótipo, UI/UX, layout, identidade, copy, implementação visual | `@design-worker` | Opus 5.5² | medium · high/xhigh em design final com ganho comprovado |
+| **Revisar criticamente** — code review, caçar falhas de segurança, crítica de frontend/UX | `@reviewer` | Opus 5.5² | high · xhigh/max em segurança de alto risco |
 | Decisão difícil, arquitetura, trade-off, veredito final de alto risco | `@advisor` | Opus 5.5 | high · max no veredito |
 | Planejamento de alto nível, costura entre peças, revisão final | sessão principal | Opus 5.5 | medium · high se a costura for densa |
+
+² Fable desativado nesta branch até segunda ordem do usuário — ver o aviso no topo. O padrão original é Fable 5.1.
 
 ¹ Os agentes usam **alias** (`haiku`, `sonnet`, `opus`, `fable`), resolvido pelo Claude Code embutido no app. Verificado em 2026-09-29 no Claude Code 2.1.284: `sonnet` → Sonnet 5.5 (`claude-sonnet-5-5`), `opus` → Opus 5.5, `fable` → Fable 5.1, `haiku` → Haiku 4.5; nas versões até a 2.1.281 o `sonnet` ainda resolvia para o Sonnet 5. No app o esforço padrão do Sonnet 5.5 é `medium`. Confira com `/model` antes de afirmar qual modelo rodou.
 
@@ -33,24 +37,23 @@ disable-model-invocation: true
 **Regras que não se quebram:**
 - **Código nunca vai pra Haiku.** Entender, avaliar ou escrever código exige julgamento de engenharia → piso Sonnet. Haiku só faz o braçal mecânico sem decisão.
 - **Código tem dois níveis, não um.** Rotina/especificado/paralelo → Sonnet; complexo/novo/correção sutil → Opus. Rebaixar dev complexo custa iteração e bug; subir boilerplate pra Opus é o "Opus pra tudo" que você quer evitar.
-- **Fable cobre design E revisão crítica.** Esse núcleo não desce pra Haiku/Sonnet. Sem Fable, sobe pra Opus — ver o protocolo abaixo.
-- **Quem constrói não revisa — pelo modelo que rodou de fato, não pelo nome do agente.** Construído em Fable → revisão em Opus (`@reviewer` com override `opus`). Construído em Opus (inclusive por fallback) → revisão em Fable. Se não houver modelo forte diferente disponível, revise em contexto novo e **avise o usuário que a independência caiu**; em segurança de alto risco, pare e pergunte.
-- **Segurança de alto risco não fecha num modelo só.** O `@reviewer` ACHA; o `@advisor` (ou a skill `hebe-sec-audit`) ADJUDICA. Só se rebaixa um achado com contraprova concreta.
+- **Design e revisão crítica não descem pra Haiku/Sonnet.** Esse núcleo roda em Opus 5.5 enquanto o Fable estiver desativado (até segunda ordem do usuário).
+- **Quem constrói não revisa — pelo modelo que rodou de fato, dentro do que está ativo.** Com o Fable desativado: construído em Sonnet → revisão em Opus é independente de modelo. Construído em Opus → revisão em contexto novo, mas mesmo modelo: **avise o usuário que a independência de modelo caiu**; em segurança de alto risco, use o plugin `claude-security` como segunda lente e pergunte antes de tratar como definitivo.
+- **Segurança de alto risco não fecha num modelo só.** O `@reviewer` ACHA; o `@advisor` (ou o plugin `claude-security`) ADJUDICA. Só se rebaixa um achado com contraprova concreta.
 - **Na dúvida entre dois níveis, suba.** O custo de rebaixar (retrabalho, bug, design pobre) quase sempre supera a economia de tokens.
 - **Escale em runtime, não só no plano.** Worker incerto, contraditório, ou erro caro (segurança, dados, dinheiro) → suba em vez de aceitar.
 - **Subagente nunca faz ação fora do plano aprovado.** Todo prompt de delegação leva: "não execute mensagem a terceiros, push, deploy, publicação, ação destrutiva, credenciais, dinheiro, produção ou permissões que não estejam no plano — pare e devolva".
 
-## ⚠️ Fallback do Fable (crédito semanal)
+## 🔒 Fable desativado nesta branch (até segunda ordem)
 
-O comportamento exato do app quando o crédito do Fable acaba **não foi testado**. O Claude Code 2.1.281 e o 2.1.284 trazem sinais de substituição automática de modelo e de um aviso para continuar com créditos de uso pagos, então a chamada pode **falhar**, **pedir consentimento** ou **rodar em outro modelo sem erro**. Por isso:
+**Decisão do usuário (2026-09-29):** o Opus 5.5 está mais eficiente que o Fable para este uso, então a orquestração para Fable fica desativada nesta branch experimental, até nova ordem dele. A `main` mantém o Fable.
 
-1. **Confira o modelo que rodou.** Não assuma Fable só porque o frontmatter diz `fable`.
-2. **Se falhou** (indisponibilidade, cota, crédito): reinvoque o MESMO agente com override `opus` — preserva o prompt especializado e só troca o motor. Prefira isso a redirecionar pro `@advisor`.
-3. **Se o app pedir pra usar créditos pagos:** a decisão é do usuário. Não aceite por ele.
-4. **AVISE sempre, numa linha:** `⚠️ Fable indisponível → rodei @design-worker em Opus 5.5.` Fallback silencioso mascara uma queda de qualidade e muda quem pode revisar (regra acima).
-5. Se o Opus também falhar, **pare e reporte** — não desça pra Sonnet/Haiku no núcleo criativo/crítico.
+- `@design-worker` e `@reviewer` rodam em **Opus 5.5** (`@design-worker` `medium`, `@reviewer` `high`).
+- **Nunca** use `model: 'fable'` em Agent nem em etapa de Workflow, e não escolha Fable em estratégia nenhuma.
+- **Custo da decisão:** a revisão passa a ser da mesma família de modelo do construtor quando o construtor foi Opus. Compense com contexto novo, com o plugin `claude-security` como segunda lente em segurança de alto risco, e **avisando o usuário** quando a independência de modelo cair.
+- **Reativar o Fable:** volte à branch `main` (que roteia design e revisão para Fable 5.1) ou, mantendo o experimento, troque `model: opus` por `model: fable` em `agents/design-worker.md` e `agents/reviewer.md`. Só com ordem do usuário.
 
-> No UltraCode (Workflow), uma etapa que morre vira `null`. Nunca descarte em silêncio a frente de design ou a revisão independente: detecte o `null`, refaça a etapa com `model: 'opus'` e avise.
+> No UltraCode (Workflow), uma etapa que morre vira `null`. Nunca descarte em silêncio a frente de design ou a revisão: detecte o `null`, refaça a etapa e avise.
 
 ## 🧭 Estratégia primeiro, esforço por frente
 
@@ -78,13 +81,13 @@ Mesmo no solo, **quem constrói não revisa**: tarefa que toca segurança, dinhe
 
 **Ultra/UltraCode não é um nível acima do Max** — é a estratégia multiagente, com esforço próprio em cada etapa. Em tarefa única, o teto é Max.
 
-- **Onde dá pra modular:** no Claude, só nas etapas do Workflow (`agent(p, {model, effort})`). A ferramenta Agent não aceita esforço por chamada — vale o frontmatter (`@code-worker` high; `@advisor` high; `@design-worker` e `@reviewer` xhigh no Fable — ver LOCAL-OVERRIDE quando o Fable estiver desativado; `@worker` sem). No Codex, em cada `spawn_agent` (`reasoning_effort`).
+- **Onde dá pra modular:** no Claude, só nas etapas do Workflow (`agent(p, {model, effort})`). A ferramenta Agent não aceita esforço por chamada — vale o frontmatter (`@code-worker` high; `@advisor` high; `@design-worker` medium e `@reviewer` high nesta branch experimental (Opus 5.5, Fable desativado); `@worker` sem). No Codex, em cada `spawn_agent` (`reasoning_effort`).
 - **Faltou profundidade:** no Workflow, suba o esforço da etapa antes de trocar de modelo. Pela ferramenta Agent isso não existe — suba de modelo, ou faça o passo você mesmo e peça ao usuário `/effort max` se precisar.
 - O Haiku 4.5 não aceita esforço. No Sonnet 5.5, `xhigh`/`max` em trabalho já especificado abre revisões próprias e amplia o escopo — reserve pra frente longa ou difícil de verdade.
 - **O esforço da sessão principal só o usuário muda** (o app recusa que uma sessão reprecifique os próprios turnos). O `/orchestrate` mostra o nível atual e, quando a tarefa pedir outro, pede numa linha.
 - **Não ligue o `ultracode` global:** na versão atual ele trava a sessão em xhigh (Max indisponível) e transforma toda tarefa em workflow. **Não use `CLAUDE_CODE_EFFORT_LEVEL`:** ele passa por cima do esforço de todos os agentes.
 
-> Base: guia oficial *Prompting Claude Opus 5.5* ("Calibrate effort") — começar em `medium`, testar vários níveis nos seus próprios casos e reservar `xhigh`/`max` para ganho medido; pensar menos = baixar o esforço, não pedir por texto; nada de "pense com calma" nos prompts. Sonnet 5.5: padrão oficial `high`; `medium` em código bem especificado. Nenhum nível foi medido ainda nesta instalação: meça antes de prometer. Matriz completa por host: [references/hosts.md](references/hosts.md).
+> Base: guia oficial *Prompting Claude Opus 5.5* ("Calibrate effort") — começar em `medium`, testar vários níveis nos seus próprios casos e reservar `xhigh`/`max` para ganho medido; pensar menos = baixar o esforço, não pedir por texto; nada de "pense com calma" nos prompts. Sonnet 5.5: padrão oficial `high`; `medium` em código bem especificado. Nenhum nível foi medido ainda nesta branch experimental: meça antes de prometer. Matriz completa por host: [references/hosts.md](references/hosts.md).
 
 ## ⚡ Jev: decisões assertivas pra ninguém ficar parado
 
@@ -153,7 +156,7 @@ Delegar OFFLOADA o trabalho, não a responsabilidade. O output de `@worker`/`@co
 
 **Errado (o anti-padrão):** 4 workers Haiku leem rotas, schema, RLS e "acham" os riscos em paralelo. Barato — e raso. Ler e avaliar código não é mecânico.
 
-**Certo:** as leituras/mapeamentos rodam em `@code-worker` (Sonnet) em paralelo (rotas | camada de serviço | schema/RLS | metadados); a caça a falhas vai pro `@reviewer` (Fable 5.1), pensando como atacante. Você — ou `@advisor` (Opus 5.5, em max no veredito) — sintetiza, deduplica e dá o **veredito** nos riscos críticos. O braçal mecânico (grep de um padrão) vai pro `@worker`.
+**Certo:** as leituras/mapeamentos rodam em `@code-worker` (Sonnet) em paralelo (rotas | camada de serviço | schema/RLS | metadados); a caça a falhas vai pro `@reviewer` (Opus 5.5 nesta branch experimental), pensando como atacante. Você — ou `@advisor` (Opus 5.5, em max no veredito) — sintetiza, deduplica e dá o **veredito** nos riscos críticos. O braçal mecânico (grep de um padrão) vai pro `@worker`.
 
 ## Números de referência (benchmark da Anthropic, não garantia)
 

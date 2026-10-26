@@ -2,6 +2,8 @@
 
 A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista), papel pela natureza da tarefa, esforço pela dificuldade de cada frente, Jev nos portões, quem constrói não revisa. O que muda por host é o modelo que ocupa cada papel e a forma de delegar. Observado em **2026-09-29**: catálogo do app Claude (Claude Code 2.1.284) e `models_cache.json` do app Codex (cliente 0.158.0). Catálogos mudam; confira antes de fixar.
 
+> **Branch experimental `for-claude+gpt`:** no Claude o Fable está desativado até segunda ordem do usuário; onde a matriz abaixo diz Fable, leia Opus 5.5. O Codex chamado a partir do Claude (executor) está na skill `orchestrator-guide`, seção "Codex como executor".
+
 ## Estratégia por host
 
 | Estratégia | Claude (app) | Codex (app) |
@@ -18,8 +20,8 @@ A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista)
 | Mecânico | `@worker` · Haiku 4.5 · sem esforço | `gpt-6-luna` · high |
 | Código especificado / análise | `@code-worker` · Sonnet 5.5 · high (xhigh em frente longa) | `gpt-6-sol` · high (xhigh em frente longa) |
 | Dev complexo | sessão principal · Opus 5.5 · medium (high/xhigh com ganho comprovado; max em problema único) | root `gpt-6-sol` · xhigh (max em problema único); `gpt-6-astra` no mais difícil de ponta a ponta |
-| Design / frontend | `@design-worker` · Fable 5.1 · xhigh | `gpt-6-astra` · xhigh (fallback `gpt-6-sol`) |
-| Revisão crítica | `@reviewer` · Fable 5.1 · xhigh (`opus` se o construtor foi Fable) | o modelo forte que **não** construiu · xhigh · `fork_turns: "none"` |
+| Design / frontend | `@design-worker` · Opus 5.5 (Fable desativado) · medium | `gpt-6-astra` · xhigh (fallback `gpt-6-sol`) |
+| Revisão crítica | `@reviewer` · Opus 5.5 (Fable desativado) · high (contexto novo se o construtor foi Opus) | o modelo forte que **não** construiu · xhigh · `fork_turns: "none"` |
 | Decisão difícil / veredito | `@advisor` · Opus 5.5 · high (max no veredito) | `gpt-6-astra` · xhigh; veredito de alto risco em max com o forte que não achou |
 | Planejamento / costura | sessão principal · Opus 5.5 · medium | root `gpt-6-sol` · xhigh |
 | Portões (Jev) | `scripts/jev_decide.py` | o mesmo script — não depende de host |

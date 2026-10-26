@@ -1,5 +1,7 @@
 # hebe-orchestrator — orquestração multi-modelo pro Claude Code (e variante Codex)
 
+> 🧪 **Branch experimental `for-claude+gpt`:** Fable desativado (`@design-worker` e `@reviewer` em Opus 5.5) e Codex (GPT-6.1 Sol, GPT-6 Astra) como segunda lente de revisão e, quando faz sentido, como construtor. Não é a `main`. Ver `docs/EXPERIMENTO-CLAUDE-GPT.md`.
+
 Empacota a estratégia **qualidade-primeiro** "cada tarefa no modelo certo pela natureza dela" num plugin reutilizável em qualquer projeto. O objetivo é a melhor qualidade por peça gastando o mínimo que essa qualidade permite — economia vem de não desperdiçar o modelo topo em trabalho mecânico, nunca de rebaixar o que exige julgamento.
 
 ## O que vem dentro

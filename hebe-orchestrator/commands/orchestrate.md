@@ -10,6 +10,8 @@ Princípio: cada frente no **modelo** certo pela natureza dela e no **esforço**
 
 Seu esforço atual nesta sessão: `${CLAUDE_EFFORT}` (se aparecer literalmente assim, sem valor, e a ferramenta `get_session` estiver disponível, leia com `get_session("self")`).
 
+> 🔒 **Branch experimental `for-claude+gpt` — até segunda ordem do usuário: o Fable está DESATIVADO.** O Opus 5.5 está mais eficiente que o Fable para este uso, então **nada é roteado para Fable**: `@design-worker` e `@reviewer` rodam em Opus 5.5 (esforço padrão `medium` no design e `high` na revisão, pelo guia oficial do Opus 5.5). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Estado da branch experimental `for-claude+gpt`; para reativar o Fable, use a branch `main` ou a seção "Reativar o Fable" da skill `orchestrator-guide`.
+
 ## 1. Estratégia — a primeira decisão
 
 Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes têm a mesma natureza. Escolha uma:
@@ -52,13 +54,13 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | Mecânico puro, zero julgamento | `@worker` (`hebe-orchestrator:worker`) | Haiku 4.5 [sem esforço] |
 | Código especificado + análise | `@code-worker` (`hebe-orchestrator:code-worker`) | Sonnet [high] |
 | Dev complexo/novo, correção sutil | você, na sessão principal (ou etapa `model: 'opus'`) | Opus 5.5 [o da sessão] |
-| Design/frontend | `@design-worker` (`hebe-orchestrator:design-worker`) | Fable 5.1 [xhigh] |
-| Revisão crítica | `@reviewer` (`hebe-orchestrator:reviewer`) | Fable 5.1 [xhigh] |
+| Design/frontend | `@design-worker` (`hebe-orchestrator:design-worker`) | Opus 5.5 [medium] — Fable desativado |
+| Revisão crítica | `@reviewer` (`hebe-orchestrator:reviewer`) | Opus 5.5 [high] — Fable desativado |
 | Decisão difícil, veredito de alto risco | `@advisor` (`hebe-orchestrator:advisor`) | Opus 5.5 [high] |
 
 - **Código nunca vai pro Haiku.** Na dúvida entre dois níveis, suba. O roteamento é seu, não do Jev.
-- **Quem constrói não revisa — pelo modelo que rodou de fato.** Construído em Fable → `@reviewer` com override `opus`. Construído em Opus (inclusive por fallback do Fable) → `@reviewer` em Fable. Sem modelo forte diferente disponível: revise em contexto novo e me avise que a independência caiu; em segurança de alto risco, pare e pergunte. Segurança de alto risco: o `@reviewer` acha, o `@advisor` (em `max`, via UltraCode) ou a skill `hebe-sec-audit` adjudica — nunca num modelo só.
-- **Fallback de Fable (crédito semanal):** confira o modelo que rodou — o app pode falhar, pedir consentimento pra créditos pagos ou trocar de modelo sozinho. Se falhou, reinvoque o MESMO agente com override `opus`. Se o app pedir créditos pagos, a decisão é minha. Sempre avise numa linha: `⚠️ Fable indisponível → rodei @<agente> em Opus 5.5.` Nunca desça pra Sonnet/Haiku no núcleo criativo/crítico, e nunca em silêncio.
+- **Quem constrói não revisa — pelo modelo que rodou de fato, dentro do que está ativo.** Com o Fable desativado: construído em Sonnet (`@code-worker`) → `@reviewer` em Opus é independente de modelo. Construído em Opus (sessão principal, `@advisor`, `@design-worker`) → o `@reviewer` revisa em contexto novo, mas o modelo é o mesmo: **me diga numa linha que a independência de modelo caiu**. Segurança de alto risco: o `@reviewer` acha, o `@advisor` (em `max`, via UltraCode) adjudica **e o plugin `claude-security` entra como segunda lente**; se ainda assim tudo fechar em Opus, diga isso e pergunte antes de tratar como definitivo.
+- **Fable desativado (até segunda ordem):** não há fallback a fazer, porque nada é roteado para Fable. Não invoque agente com override `fable` e não use `model: 'fable'` em etapa de Workflow. Se eu mandar reativar, siga a seção "Fable desativado" da skill `orchestrator-guide`.
 
 ## 4. Portão do plano (Jev)
 
@@ -112,8 +114,8 @@ JSON
 
 - Solo Sonnet: `agent(p, {model: 'sonnet', effort: '<pela seção 2>'})` em todas as etapas de construção.
 - Solo Opus: `agent(p, {model: 'opus', effort: '<pela seção 2>'})`.
-- Mista: `agent(p, {agentType: 'hebe-orchestrator:<papel>', effort: '<pela seção 2>'})` — `model: 'opus'` no `reviewer` quando o construtor foi Fable; `effort: 'max'` no `advisor` para veredito de alto risco; `worker` sem esforço.
-- Etapa que volta `null` (erro terminal, crédito do Fable, etapa pulada) **nunca** some em silêncio: refaça com `model: 'opus'` quando for design ou revisão, e me avise.
+- Mista: `agent(p, {agentType: 'hebe-orchestrator:<papel>', effort: '<pela seção 2>'})` — `design-worker` e `reviewer` já rodam em Opus (Fable desativado); `effort: 'max'` no `advisor` para veredito de alto risco; `worker` sem esforço.
+- Etapa que volta `null` (erro terminal, etapa pulada) **nunca** some em silêncio: refaça a etapa e me avise.
 
 **Ferramenta Agent** é o caminho sem pedido meu: delegue com o `subagent_type` da seção 3 (esforço do frontmatter) e, se a estratégia certa for UltraCode, sugira numa linha — `Isso divide em N frentes; rodo em UltraCode com Sonnet?`. Meu "sim" conta como pedido.
 
