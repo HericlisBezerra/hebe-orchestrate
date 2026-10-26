@@ -25,6 +25,9 @@ A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista)
 | Decisão difícil / veredito | `@advisor` · Opus 5.5 · high (max no veredito) | `gpt-6-astra` · xhigh; veredito de alto risco em max com o forte que não achou |
 | Planejamento / costura | sessão principal · Opus 5.5 · medium | root `gpt-6-sol` · xhigh |
 | Portões (Jev) | `scripts/jev_decide.py` | o mesmo script — não depende de host |
+| Codex chamado do Claude (branch `for-claude+gpt`) | `scripts/codex_bridge.py review` (segunda lente, `gpt-6.1-sol`) e `build` (`gpt-6-astra` · high, worktree própria, sem commit) | — |
+
+> Catálogo do Codex observado em **2026-10-26** (Codex CLI 0.164.0): `gpt-6.1-sol` é o modelo de uso geral mais novo (padrão da conta), `gpt-6-astra` o de fronteira, `gpt-6.1-terra` o equilibrado e `gpt-6-luna` o rápido e barato. Não existe `gpt-6.1-luna`. A matriz acima ainda cita `gpt-6-sol`, da observação de setembro; no app Codex prefira `gpt-6.1-sol`.
 
 No Claude, o UltraCode (ferramenta Workflow) só roda quando o usuário digitou o comando ou escreveu "ultracode"; quando o Claude aciona a orquestração sozinho, ele sugere numa linha.
 

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0-exp.1 — 2026-10-26 (branch experimental `for-claude+gpt`, fora da `main`)
+
+**Experimento de 15 a 30 dias: o Claude coordena, o Codex soma.** Detalhes, números do piloto e hipóteses: `hebe-orchestrator/docs/EXPERIMENTO-CLAUDE-GPT.md`.
+
+- **Fable desativado na branch** (decisão do usuário): `@design-worker` e `@reviewer` em Opus 5.5 (`medium` e `high`). Antes era um ajuste local, fora do repositório.
+- **`scripts/codex_bridge.py`** — ponte com o plugin oficial `openai-codex`:
+  - `review`: revisão adversarial do Codex como segunda lente de outro fornecedor, somente leitura, devolvendo um JSON compacto. Sem `--base` revisa a árvore de trabalho; com `--base` revisa commits e recusa árvore suja. Recusa revisar o que o próprio Codex construiu.
+  - `build`: o Codex constrói numa worktree própria, sem commit. O pedido vai com proibições de escopo, e o resultado volta com `scope_flags` sobre o diff (dependência, lockfile, notas/vault/ADR, logs de teste, arquivo apagado, fora da pasta).
+  - `outcome` e `report`: diário privado do experimento (`~/.config/hebe-brain/codex-experiment.jsonl`, 0600) para medir qualidade e eficiência.
+  - `policy`: pastas bloqueadas para o Codex.
+  - `cleanup`: remove worktrees criadas pela ponte.
+  - Codex isolado (decisão do `@advisor`): `CODEX_HOME` próprio com login separado, sem MCP, sem plugins, sem memória, sem AGENTS.md global, sandbox sem rede; app-server direto por chamada, com ambiente mínimo; em timeout ou interrupção (SIGINT/SIGTERM) encerra só o grupo de processos da chamada.
+  - Proteções: recusa texto com segredo antes de qualquer chamada, e também segredo no diff e nos arquivos novos que a revisão enviaria; a política bloqueia a pasta e o repositório que a contém; `--copy` só aceita pasta ignorada pelo Git, sem symlink nem nome de segredo; o Codex recebe ambiente mínimo; timeout cancela só os jobs da própria chamada; falha do Codex nunca vira revisão válida; worktree e branch são removidas se algo falha antes do Codex; depois que o Codex começou, a worktree é preservada; `cleanup` nunca apaga branch com commits fora da base; comandos git sem hooks nem fsmonitor; `doctor` trava a versão 1.0.6 do plugin.
+- **Regras** (`/orchestrate` seção 3b; skill, seção "Codex como executor"):
+  - Revisão relevante = `@reviewer` (Opus) **mais** Codex Sol: complemento, nunca substituto.
+  - Construção pelo Codex só com pedido fechado, testes, uma pasta e sem decisão de produto aberta, com o Claude fazendo outra frente. Padrão: GPT-6 Astra em `high`; o Claude testa, revisa e commita.
+  - O Codex nunca revisa o que construiu.
+  - A segunda lente de segurança de alto risco passa a ser o plugin `claude-security`.
+- **Piloto em código real de cliente** (anonimizado):
+  - Revisão do Codex: ~16% do que o Opus achou, 100% de acerto, problemas reais que o Opus não pegou, ~1 mil tokens do Claude por revisão.
+  - Construção (nota cega): Opus 7, Astra `high` 6,5, Sol `high` 6, `medium` 5.
+  - Nenhum defeito real do Codex, mas desvios de escopo repetidos.
+- Testes: `test_codex_bridge.py` (companion falso, sem rede). O teste de versões aceita sufixo de pré-lançamento.
+
 ## Não lançado (próxima versão) — esforço no Opus 5.5 conforme o guia oficial
 
 Base: *Prompting Claude Opus 5.5* (platform.claude.com, seção "Calibrate effort") e a newsletter Gruponomics "Opus 5.5: como pedir".

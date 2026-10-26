@@ -2,6 +2,8 @@
 
 **A Claude Code _plugin_ that picks the right strategy, model and reasoning effort for every task — by its nature and difficulty, not by its price. Ships a Codex variant of the same doctrine.**
 
+> 🧪 **Experimental branch `for-claude+gpt` (not `main`).** Claude keeps coordinating; OpenAI Codex (GPT-6.1 Sol / GPT-6 Astra) is added as a cross-vendor second-lens reviewer and, when it makes sense, as a builder working in its own git worktree — via `hebe-orchestrator/scripts/codex_bridge.py`, with a private experiment ledger. Fable is disabled on this branch. Rationale, pilot numbers and hypotheses: [`hebe-orchestrator/docs/EXPERIMENTO-CLAUDE-GPT.md`](hebe-orchestrator/docs/EXPERIMENTO-CLAUDE-GPT.md) (Portuguese).
+
 > ⚠️ **This is a plugin, not a skill.** It installs through the plugin marketplace (`/plugin`), not by copying a folder into `~/.claude/skills/`. See [Install](#install).
 
 Most "cost optimization" setups make everything cheaper and quietly make everything worse. This one does the opposite: it puts each piece of work on the model that actually fits it, and saves money only where saving costs nothing.

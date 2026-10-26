@@ -27,7 +27,7 @@ class ManifestTests(unittest.TestCase):
         codex = json.loads((PLUGIN / ".codex-plugin" / "plugin.json").read_text())["version"]
         market = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
         entry = next(p for p in market["plugins"] if p["name"] == "hebe-orchestrator")
-        changelog = re.search(r"^## (\d+\.\d+\.\d+)", (REPO / "CHANGELOG.md").read_text(), re.M).group(1)
+        changelog = re.search(r"^## (\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)", (REPO / "CHANGELOG.md").read_text(), re.M).group(1)
         self.assertEqual({claude, codex, entry["version"], changelog}, {claude})
 
     def test_codex_manifest_points_only_to_codex_skills(self):
@@ -66,7 +66,7 @@ class ManifestTests(unittest.TestCase):
                 self.assertIsNone(re.search(r"\$\d", path.read_text(encoding="utf-8")))
 
     def test_scripts_referenced_by_docs_exist(self):
-        for name in ("jev.py", "jev_decide.py", "jev_rules.py"):
+        for name in ("jev.py", "jev_decide.py", "jev_rules.py", "codex_bridge.py"):
             self.assertTrue((PLUGIN / "scripts" / name).is_file(), name)
 
 

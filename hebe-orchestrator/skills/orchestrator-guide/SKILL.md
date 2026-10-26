@@ -1,12 +1,12 @@
 ---
 name: orchestrator-guide
-description: Doutrina de orquestração multi-modelo qualidade-primeiro no Claude Code — primeiro a estratégia (direto, UltraCode com um modelo só, ou mista), depois cada frente no modelo certo pela natureza dela (mecânico→Haiku, código especificado→Sonnet, dev complexo e decisão→Opus, design e revisão→Opus enquanto o Fable estiver desativado) e no esforço certo pela dificuldade, revisando o output antes de confiar e usando o Jev pra não parar em decisão que não é do usuário. Invoque ao planejar uma tarefa longa/composta.
+description: Doutrina de orquestração multi-modelo qualidade-primeiro no Claude Code — primeiro a estratégia (direto, UltraCode com um modelo só, ou mista), depois cada frente no modelo certo pela natureza dela (mecânico→Haiku, código especificado→Sonnet, dev complexo e decisão→Opus, design e revisão→Opus enquanto o Fable estiver desativado; Codex GPT-6.1 Sol como revisor de outro fornecedor e, quando faz sentido, como construtor) e no esforço certo pela dificuldade, revisando o output antes de confiar e usando o Jev pra não parar em decisão que não é do usuário. Invoque ao planejar uma tarefa longa/composta.
 disable-model-invocation: true
 ---
 
 # Orquestração multi-modelo — doutrina qualidade-primeiro
 
-> 🔒 **Branch experimental `for-claude+gpt` — até segunda ordem do usuário: o Fable está DESATIVADO.** O Opus 5.5 está mais eficiente que o Fable para este uso, então **nada é roteado para Fable**: `@design-worker` e `@reviewer` rodam em Opus 5.5 (esforço padrão `medium` no design e `high` na revisão, pelo guia oficial do Opus 5.5). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Estado da branch experimental `for-claude+gpt`; para reativar o Fable, use a branch `main` ou a seção "Reativar o Fable" da skill `orchestrator-guide`.
+> 🔒 **Branch experimental `for-claude+gpt` — até segunda ordem do usuário: o Fable está DESATIVADO.** O Opus 5.5 está mais eficiente que o Fable para este uso, então **nada é roteado para Fable**: `@design-worker` e `@reviewer` rodam em Opus 5.5 (esforço padrão `medium` no design e `high` na revisão, pelo guia oficial do Opus 5.5). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Para reativar o Fable, veja "Reativar o Fable" abaixo.
 
 **Objetivo:** a MELHOR qualidade possível em cada peça da tarefa, gastando o mínimo que essa qualidade permite. Economia vem de **não desperdiçar o modelo topo em trabalho genuinamente mecânico** — NUNCA de rebaixar trabalho que exige julgamento. Velocidade vem de **não orquestrar o que um modelo só resolve** e de não parar pra perguntar o que o Jev decide com segurança.
 
@@ -23,8 +23,12 @@ disable-model-invocation: true
 | **Revisar criticamente** — code review, caçar falhas de segurança, crítica de frontend/UX | `@reviewer` | Opus 5.5² | high · xhigh/max em segurança de alto risco |
 | Decisão difícil, arquitetura, trade-off, veredito final de alto risco | `@advisor` | Opus 5.5 | high · max no veredito |
 | Planejamento de alto nível, costura entre peças, revisão final | sessão principal | Opus 5.5 | medium · high se a costura for densa |
+| **Segunda lente de revisão, de outro fornecedor** — em toda revisão que o `@reviewer` faria | `codex_bridge.py review` | GPT-6.1 Sol³ | padrão do plugin |
+| **Construção grande e especificada, quando faz sentido** — o Codex escreve, o Claude testa, revisa e commita | `codex_bridge.py build` | GPT-6 Astra³ | high · xhigh só após retrabalho |
 
 ² Fable desativado nesta branch até segunda ordem do usuário — ver o aviso no topo. O padrão original é Fable 5.1.
+
+³ Experimento `for-claude+gpt`: regras, números do piloto e hipóteses na seção "Codex como executor".
 
 ¹ Os agentes usam **alias** (`haiku`, `sonnet`, `opus`, `fable`), resolvido pelo Claude Code embutido no app. Verificado em 2026-09-29 no Claude Code 2.1.284: `sonnet` → Sonnet 5.5 (`claude-sonnet-5-5`), `opus` → Opus 5.5, `fable` → Fable 5.1, `haiku` → Haiku 4.5; nas versões até a 2.1.281 o `sonnet` ainda resolvia para o Sonnet 5. No app o esforço padrão do Sonnet 5.5 é `medium`. Confira com `/model` antes de afirmar qual modelo rodou.
 
@@ -38,8 +42,8 @@ disable-model-invocation: true
 - **Código nunca vai pra Haiku.** Entender, avaliar ou escrever código exige julgamento de engenharia → piso Sonnet. Haiku só faz o braçal mecânico sem decisão.
 - **Código tem dois níveis, não um.** Rotina/especificado/paralelo → Sonnet; complexo/novo/correção sutil → Opus. Rebaixar dev complexo custa iteração e bug; subir boilerplate pra Opus é o "Opus pra tudo" que você quer evitar.
 - **Design e revisão crítica não descem pra Haiku/Sonnet.** Esse núcleo roda em Opus 5.5 enquanto o Fable estiver desativado (até segunda ordem do usuário).
-- **Quem constrói não revisa — pelo modelo que rodou de fato, dentro do que está ativo.** Com o Fable desativado: construído em Sonnet → revisão em Opus é independente de modelo. Construído em Opus → revisão em contexto novo, mas mesmo modelo: **avise o usuário que a independência de modelo caiu**; em segurança de alto risco, use o plugin `claude-security` como segunda lente e pergunte antes de tratar como definitivo.
-- **Segurança de alto risco não fecha num modelo só.** O `@reviewer` ACHA; o `@advisor` (ou o plugin `claude-security`) ADJUDICA. Só se rebaixa um achado com contraprova concreta.
+- **Quem constrói não revisa — e a revisão relevante tem um revisor de outro fornecedor.** Construído no Claude → `@reviewer` (Opus) **mais** a revisão do Codex como segunda lente, o que devolve a independência de modelo mesmo com o Fable desativado. Construído pelo Codex → `@reviewer` (Opus) revisa e o orquestrador roda os testes. Sem Codex disponível, **avise o usuário que a independência de modelo caiu**.
+- **Segurança de alto risco não fecha num modelo só.** O `@reviewer` e o Codex ACHAM; o `@advisor` ADJUDICA, com o plugin `claude-security` como lente extra. Só se rebaixa um achado com contraprova concreta.
 - **Na dúvida entre dois níveis, suba.** O custo de rebaixar (retrabalho, bug, design pobre) quase sempre supera a economia de tokens.
 - **Escale em runtime, não só no plano.** Worker incerto, contraditório, ou erro caro (segurança, dados, dinheiro) → suba em vez de aceitar.
 - **Subagente nunca faz ação fora do plano aprovado.** Todo prompt de delegação leva: "não execute mensagem a terceiros, push, deploy, publicação, ação destrutiva, credenciais, dinheiro, produção ou permissões que não estejam no plano — pare e devolva".
@@ -50,10 +54,30 @@ disable-model-invocation: true
 
 - `@design-worker` e `@reviewer` rodam em **Opus 5.5** (`@design-worker` `medium`, `@reviewer` `high`).
 - **Nunca** use `model: 'fable'` em Agent nem em etapa de Workflow, e não escolha Fable em estratégia nenhuma.
-- **Custo da decisão:** a revisão passa a ser da mesma família de modelo do construtor quando o construtor foi Opus. Compense com contexto novo, com o plugin `claude-security` como segunda lente em segurança de alto risco, e **avisando o usuário** quando a independência de modelo cair.
+- **Custo da decisão:** sem o Fable, o `@reviewer` é da mesma família do construtor quando o construtor foi Opus. Nesta branch isso é compensado pela revisão do Codex (outro fornecedor). Sem Codex disponível, use contexto novo, o plugin `claude-security` em segurança de alto risco, e **avise o usuário** que a independência de modelo caiu.
 - **Reativar o Fable:** volte à branch `main` (que roteia design e revisão para Fable 5.1) ou, mantendo o experimento, troque `model: opus` por `model: fable` em `agents/design-worker.md` e `agents/reviewer.md`. Só com ordem do usuário.
 
 > No UltraCode (Workflow), uma etapa que morre vira `null`. Nunca descarte em silêncio a frente de design ou a revisão: detecte o `null`, refaça a etapa e avise.
+
+## 🤝 Codex como executor (experimento `for-claude+gpt`)
+
+Nesta branch o Claude continua coordenando, e o Codex entra por uma ponte com dois papéis: **segunda lente de revisão** e **construtor de frentes grandes e especificadas**. O objetivo do experimento (15 a 30 dias) é medir na prática se isso aumenta qualidade e eficiência, usando as duas assinaturas, sem trocar quem faz cada coisa por palpite. Protocolo de uso: comando `/orchestrate`, seção 3b. Hipóteses e métricas: `docs/EXPERIMENTO-CLAUDE-GPT.md`.
+
+**O que o piloto mostrou (antes de ligar)** — código real de um serviço de um cliente, comparado em condições iguais:
+
+- **Revisão.** O Codex revisou os mesmos três estados que três rodadas de revisão do Opus revisaram. Achou só ~16% dos 34 itens que o Opus achou (perdeu operação, configuração, alarmes e detalhes de protocolo — o Opus também rodou sondas, o Codex só leu). Mas teve **100% de acerto**, antecipou 2 problemas reais que o Opus só pegou na rodada seguinte e achou 3 que as três rodadas do Opus deixaram passar, todos em fluxo de dados, ordem de gravação e garantias de apagamento. Sol e Astra empataram (o Sol foi um pouco melhor). Para o Claude, cada revisão do Codex custou ~1 mil tokens de leitura, contra 6,6–17,6 M de cache e 131–203 mil de saída em cada revisão do Opus. → **Complemento, nunca substituto.**
+- **Construção.** O mesmo pedido (corrigir os 7 achados de uma revisão) foi feito pelo Opus e pelo Codex. Nota cega de qualidade: Opus 7, Astra `high` 6,5, Sol `high` 6, Astra `medium` 5, Sol `medium` 5 (uma amostra de cada). Nenhuma falha do Codex nos testes de aceitação era defeito real (eram nomes e valores de interface diferentes). O ponto fraco foi **disciplina de escopo**: as versões do Codex desligaram uma funcionalidade sem pedido, mudaram um contrato entre sistemas, criaram notas e uma acrescentou dependência. → **Só com pedido fechado, regras de escopo explícitas e revisão do Claude**, em `high`, com o Astra como padrão de construção e o Sol como padrão de revisão.
+- **Sandbox.** No piloto o Codex não conseguiu commitar (o companion pede `workspace-write` e o `.git` ficou bloqueado). Isso vira vantagem: o commit é sempre do Claude, depois de testar e revisar. Não é garantia — confira com `codex_bridge.py doctor`; a ponte sinaliza se a árvore principal mudar durante a construção.
+
+**Regras derivadas:**
+
+- Revisão do Codex roda junto com a do `@reviewer`, nunca no lugar dela. Achado descartado precisa de razão; achado alto em disputa vai ao `@advisor`.
+- Construção pelo Codex só com pedido fechado, critério de aceite e testes, numa pasta, sem decisão de produto/contrato aberta — e com o Claude fazendo outra frente enquanto isso. A ponte acrescenta ao pedido as proibições (não desligar funcionalidade, não mudar contrato, não adicionar dependência, não criar notas; se achar necessário, listar em "Decisões pendentes") e devolve `scope_flags` sobre o diff.
+- O Codex nunca revisa o que ele mesmo construiu. Construção do Codex → revisão do Opus. Construção do Claude → revisão do Opus + do Codex.
+- O Codex da ponte é **isolado** do Codex do usuário (decisão do `@advisor`): login próprio feito uma vez pelo usuário, nenhum conector MCP ou plugin (navegador, desktop, REPL, tarefas), sem memória e sem AGENTS.md global, sandbox sem rede, ambiente mínimo, um app-server por chamada. Assim uma instrução maliciosa escondida no código revisado não tem ferramenta para acionar.
+- Pasta bloqueada pela política local (`codex_bridge.py policy deny <pasta>` — bloqueia também o repositório que a contém), segredo no pedido, segredo no diff ou em arquivo novo a revisar, `--copy` perigoso: a ponte recusa e nada sai. Não contorne.
+- Codex indisponível: siga no Claude e avise numa linha. Nunca espere em silêncio.
+- **Meça:** registre `outcome` depois de cada uso. Sem desfecho registrado, o experimento não diz nada sobre qualidade.
 
 ## 🧭 Estratégia primeiro, esforço por frente
 

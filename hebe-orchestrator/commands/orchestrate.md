@@ -10,7 +10,7 @@ Princípio: cada frente no **modelo** certo pela natureza dela e no **esforço**
 
 Seu esforço atual nesta sessão: `${CLAUDE_EFFORT}` (se aparecer literalmente assim, sem valor, e a ferramenta `get_session` estiver disponível, leia com `get_session("self")`).
 
-> 🔒 **Branch experimental `for-claude+gpt` — até segunda ordem do usuário: o Fable está DESATIVADO.** O Opus 5.5 está mais eficiente que o Fable para este uso, então **nada é roteado para Fable**: `@design-worker` e `@reviewer` rodam em Opus 5.5 (esforço padrão `medium` no design e `high` na revisão, pelo guia oficial do Opus 5.5). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Estado da branch experimental `for-claude+gpt`; para reativar o Fable, use a branch `main` ou a seção "Reativar o Fable" da skill `orchestrator-guide`.
+> 🔒 **Branch experimental `for-claude+gpt` — até segunda ordem do usuário: o Fable está DESATIVADO.** O Opus 5.5 está mais eficiente que o Fable para este uso, então **nada é roteado para Fable**: `@design-worker` e `@reviewer` rodam em Opus 5.5 (esforço padrão `medium` no design e `high` na revisão, pelo guia oficial do Opus 5.5). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Estado da branch experimental `for-claude+gpt`; para reativar o Fable, use a branch `main` ou a seção "Fable desativado" da skill `orchestrator-guide`.
 
 ## 1. Estratégia — a primeira decisão
 
@@ -57,10 +57,49 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | Design/frontend | `@design-worker` (`hebe-orchestrator:design-worker`) | Opus 5.5 [medium] — Fable desativado |
 | Revisão crítica | `@reviewer` (`hebe-orchestrator:reviewer`) | Opus 5.5 [high] — Fable desativado |
 | Decisão difícil, veredito de alto risco | `@advisor` (`hebe-orchestrator:advisor`) | Opus 5.5 [high] |
+| Segunda lente de revisão (outro fornecedor) | `codex_bridge.py review` (seção 3b) | GPT-6.1 Sol [padrão do plugin] |
+| Construção grande e especificada, quando faz sentido (o Codex escreve, o Claude revisa) | `codex_bridge.py build` (seção 3b) | GPT-6 Astra [high] |
 
 - **Código nunca vai pro Haiku.** Na dúvida entre dois níveis, suba. O roteamento é seu, não do Jev.
-- **Quem constrói não revisa — pelo modelo que rodou de fato, dentro do que está ativo.** Com o Fable desativado: construído em Sonnet (`@code-worker`) → `@reviewer` em Opus é independente de modelo. Construído em Opus (sessão principal, `@advisor`, `@design-worker`) → o `@reviewer` revisa em contexto novo, mas o modelo é o mesmo: **me diga numa linha que a independência de modelo caiu**. Segurança de alto risco: o `@reviewer` acha, o `@advisor` (em `max`, via UltraCode) adjudica **e o plugin `claude-security` entra como segunda lente**; se ainda assim tudo fechar em Opus, diga isso e pergunte antes de tratar como definitivo.
+- **Quem constrói não revisa — e a revisão relevante tem um revisor de outro fornecedor.** Construído no Claude (Sonnet ou Opus) → `@reviewer` (Opus) **e** a revisão do Codex (seção 3b) como segunda lente: a independência de modelo volta, mesmo com o Fable desativado. Construído pelo Codex → `@reviewer` (Opus) revisa o diff e eu rodo os testes; o Codex não revisa o que ele mesmo escreveu. Se o Codex estiver indisponível, me diga numa linha que a independência caiu. Segurança de alto risco: o `@reviewer` acha, o `@advisor` (em `max`, via UltraCode) adjudica, e o Codex e o plugin `claude-security` entram como lentes extras — nunca fecha num modelo só.
 - **Fable desativado (até segunda ordem):** não há fallback a fazer, porque nada é roteado para Fable. Não invoque agente com override `fable` e não use `model: 'fable'` em etapa de Workflow. Se eu mandar reativar, siga a seção "Fable desativado" da skill `orchestrator-guide`.
+
+## 3b. Codex: segunda lente e construtor (experimento `for-claude+gpt`)
+
+O Codex roda pela ponte `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex_bridge.py"`, que usa o plugin oficial `openai-codex` num **Codex isolado** (`~/.cache/hebe-orchestrator/codex-home`: login próprio, sem MCP, sem plugins, sem memória, sem AGENTS.md global, sandbox sem rede), aplica a política de pastas, recusa segredo no pedido e no conteúdo revisado e registra cada uso no diário do experimento. Primeiro uso: rode `codex_bridge.py doctor`; se faltar o login isolado, **peça ao usuário** para rodar `CODEX_HOME=~/.cache/hebe-orchestrator/codex-home codex login` uma vez — nunca faça login por ele. O custo para o Claude é escrever o pedido e ler um JSON curto; o trabalho pesado sai da cota do Codex. Detalhes, números do piloto e hipóteses: skill `orchestrator-guide`, seção "Codex como executor".
+
+**Revisão cruzada (somente leitura)** — em toda revisão que o `@reviewer` faria (segurança, arquitetura, refactor grande, entrega com várias frentes):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex_bridge.py" review --cwd <repo> --focus "<o que importa, sem segredo>" --label <frente>
+```
+
+- Sem `--base`, o Codex revisa a **árvore de trabalho** (o que ainda não foi commitado — o caso normal). Com `--base <commit>`, revisa os commits `base..HEAD` e a ponte recusa árvore suja, para nada ficar de fora.
+
+- Rode em paralelo com o `@reviewer` (Bash em segundo plano). **É complemento, nunca substituto:** no piloto o Codex achou só ~16% do que a revisão do Opus achou, mas com 100% de acerto e numa classe diferente (fluxo de dados, ordem de gravação, garantias de apagamento).
+- Junte os achados dos dois revisores. Achado do Codex que você descartar precisa de razão de uma linha (teste, código ou contradição) — nada de descarte silencioso. Achado alto em disputa vai ao `@advisor`.
+- Modelo: Sol. Astra só como terceira lente em alto risco (no piloto não acrescentou nada sobre o Sol).
+
+**Construção pelo Codex (o Codex escreve, o Claude revisa)** — só quando **todas** valem:
+
+1. a frente está especificada: itens fechados, critério de aceite e testes executáveis;
+2. é grande o bastante para compensar (vários arquivos ou ~150+ linhas esperadas) e cabe numa pasta;
+3. não há decisão de produto ou de contrato em aberto, nem credencial, produção, dinheiro ou dado de cliente sensível no caminho;
+4. o Claude tem outra frente útil para fazer enquanto o Codex trabalha (é aí que está o ganho).
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex_bridge.py" build --repo <repo> --brief <arquivo-do-pedido> --label <frente> --effort high --allow <pasta> [--copy node_modules]
+```
+
+- Rode o `build` **em segundo plano** (Bash com `run_in_background`): ele leva de 7 a 20 minutos e o Bash em primeiro plano corta em 10. A revisão também pode ir em segundo plano.
+
+- Modelo padrão GPT-6 Astra em `high` (no piloto: Astra `high` 6,5/10 em 10 min, Sol `high` 6/10 em 16,5 min, `medium` 5/10 nos dois). Use `--model gpt-6.1-sol` de vez em quando para o experimento comparar. `xhigh` só se uma rodada em `high` voltar com retrabalho; o plugin não aceita `max`/`ultra`.
+- O Codex trabalha numa worktree própria e **não commita** (o companion pede sandbox `workspace-write`; no piloto o `.git` ficou bloqueado — confira com `codex_bridge.py doctor`, porque uma configuração `danger-full-access` no Codex pode mudar isso; a ponte também sinaliza se a sua árvore principal mudou durante a construção). Você roda os testes na worktree, o `@reviewer` revisa o diff, você resolve cada `scope_flags` (dependência nova, lockfile, notas/vault, arquivo apagado, fora da pasta), commita e integra. Decisão de produto que o Codex tomou sozinho (desligar funcionalidade, mudar contrato) é revertida ou vem a mim.
+- Não use para: tarefa pequena (o vai-e-vem custa mais que fazer), trabalho interativo comigo, design, decisão de arquitetura, segurança de alto risco.
+
+**Falha do Codex** (código 3: timeout, sem login, resposta inválida): siga no Claude e me avise numa linha; num `build`, inspecione a worktree que o erro aponta e apague com `codex_bridge.py cleanup --worktree <caminho> --force` (a branch `codex/` só é apagada se não tiver commits fora da base). Código 4: pasta bloqueada pela política, segredo no texto, `--copy` perigoso ou o Codex revisando o próprio trabalho — não contorne. `--copy` só aceita pasta ignorada pelo Git (ex.: `node_modules`), nunca `.env`, chave ou symlink.
+
+**Diário do experimento:** depois de adjudicar uma revisão ou integrar uma construção, registre o desfecho — `codex_bridge.py outcome --id <ledger_id> --result confirmed|mixed|noise|accepted|reworked|rejected [--real N --false N --missed N] --reviewer opus`. Sem isso o experimento não mede qualidade. Resumo: `codex_bridge.py report --days 30`.
 
 ## 4. Portão do plano (Jev)
 
@@ -134,6 +173,6 @@ JSON
 
 ## 6. Costure e revise
 
-Você mesmo. No fim, reporte: a estratégia e por quê; o que cada frente fez, em que modelo (o que rodou de fato) e esforço; as decisões do Jev (`decision_id`, tipo, resultado, modo); e onde qualidade e custo caíram ou subiram.
+Você mesmo. No fim, reporte: a estratégia e por quê; o que cada frente fez, em que modelo (o que rodou de fato) e esforço; as decisões do Jev (`decision_id`, tipo, resultado, modo); o uso do Codex (`ledger_id`, revisão ou construção, modelo, o que foi aceito e o que foi descartado, e se o `outcome` foi registrado); e onde qualidade e custo caíram ou subiram.
 
 Se o script não estiver em `${CLAUDE_PLUGIN_ROOT}`, localize com `ls ~/.claude/plugins/cache/*/hebe-orchestrator/*/scripts/jev_decide.py`. Sem Jev configurado, o fluxo é o de antes: o plano espera minha aprovação, desempate é seu, escalada segue "na dúvida, suba".
