@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Executa APENAS trabalho mecânico e sem julgamento — grep/busca, renomear, aplicar uma edição já ditada, mover arquivo, extrair um valor, rodar um comando/checagem e reportar a saída. NUNCA use para entender, analisar, avaliar ou auditar código — isso é do code-worker (Sonnet 5.5). Roda em Haiku 4.5, contexto isolado.
+description: Executa APENAS trabalho mecânico e sem julgamento — grep/busca, renomear, aplicar uma edição já ditada, mover arquivo, extrair um valor, rodar um comando/checagem e reportar a saída. NUNCA use para entender, analisar, avaliar ou auditar código — isso é do code-worker (Sonnet). Roda em Haiku, contexto isolado.
 model: haiku
 ---
 

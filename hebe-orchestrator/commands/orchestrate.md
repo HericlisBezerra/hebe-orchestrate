@@ -10,6 +10,8 @@ Princípio: cada frente no **modelo** certo pela natureza dela e no **esforço**
 
 Seu esforço atual nesta sessão: `${CLAUDE_EFFORT}` (se aparecer literalmente assim, sem valor, e a ferramenta `get_session` estiver disponível, leia com `get_session("self")`).
 
+> 🔒 **Fable desativado — até nova ordem do usuário ou até sair um Fable novo (nesse caso, me pergunte se volta).** **Nada é roteado para Fable**: `@design-worker` roda em Opus (esforço `medium`) e `@reviewer` roda em Opus (esforço `high`). Nunca use `model: 'fable'` em Agent nem em etapa de Workflow. Para reativar, só com ordem minha: trocar `model: opus` por `model: fable` nos dois agentes.
+
 ## 1. Estratégia — a primeira decisão
 
 Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes têm a mesma natureza. Escolha uma:
@@ -21,8 +23,8 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | **UltraCode solo — Opus** | Grande e divisível, frentes da mesma natureza, trabalho difícil: refactor complexo entre subsistemas, auditoria profunda, bug que atravessa módulos | Workflow com todas as etapas em `model: 'opus'`, esforço por etapa |
 | **Orquestração mista** | Frentes de naturezas diferentes (mecânico + código + design + revisão + decisão) | Cada frente no seu nível (seção 3), esforço por frente |
 
-- O Sonnet 5.5 e o Opus 5.5 resolvem sozinhos muita tarefa grande. **Não divida entre modelos o que um modelo só faz bem** — cada handoff custa contexto e latência.
-- O alias `sonnet` é resolvido pelo app: a partir do Claude Code 2.1.284 roda o **Sonnet 5.5**; em versões anteriores roda o Sonnet 5. Reporte o modelo que rodou de fato.
+- O Sonnet e o Opus resolvem sozinhos muita tarefa grande. **Não divida entre modelos o que um modelo só faz bem** — cada handoff custa contexto e latência.
+- Os modelos vão pelo apelido (`haiku`, `sonnet`, `opus`), que o app resolve para a versão mais recente de cada família. Reporte o modelo que rodou de fato.
 - Mesmo no solo, **quem constrói não revisa**: se a tarefa toca risco (segurança, dinheiro, permissão, dados), feche com uma etapa de revisão num modelo diferente do construtor.
 - Diga a estratégia escolhida e o porquê numa linha no plano.
 
@@ -31,17 +33,17 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 | Esforço | Para |
 |---|---|
 | `low` | Mecânico trivial, consulta pontual |
-| `medium` | **Ponto de partida** (padrão oficial do Opus 5.5): especificado e delimitado, e também a maior parte do trabalho que pensa |
+| `medium` | **Ponto de partida** (padrão oficial do Opus): especificado e delimitado, e também a maior parte do trabalho que pensa |
 | `high` | Especificado mas longo ou multiarquivo; julgamento que já pesa (revisão crítica, decisão de arquitetura) |
-| `xhigh` (Extra) | Só onde você **mediu ganho** sobre `high`: dev complexo, design final, costura de peças interdependentes. No Opus 5.5 pensa mais por turno que no Opus 5: custa mais tempo e tokens |
+| `xhigh` (Extra) | Só onde você **mediu ganho** sobre `high`: dev complexo, design final, costura de peças interdependentes. No Opus pensa mais por turno que antes: custa mais tempo e tokens |
 | `max` | Problema único, difícil e caro de errar: bug sutil de estado/concorrência, decisão irreversível, veredito de segurança. **Nunca por garantia** |
 | **UltraCode** | Não é um nível acima do Max — é a estratégia multiagente da seção 1, com esforço próprio em cada etapa |
 
 - **Só dá pra modular o esforço de uma frente no UltraCode** (etapas do Workflow). Pela ferramenta Agent vale o frontmatter do agente, e a sua própria sessão só eu mudo — o app não deixa uma sessão reprecificar os próprios turnos.
 - **Faltou profundidade:** no UltraCode, suba o esforço da etapa antes de trocar de modelo. Pela ferramenta Agent, suba de modelo ou faça o passo você mesmo; se a tarefa pedir `max` na sessão principal, me diga numa linha: `Isso pede max; ajusta no menu de esforço?`.
-- **Comece em `medium` e suba só com ganho comprovado na tarefa** (guia oficial do Opus 5.5, "Calibrate effort": `medium` no 5.5 iguala ou supera `high` no Opus 5; teste vários níveis nos seus casos e reserve `xhigh`/`max` para ganho medido). Para o modelo pensar menos, **baixe o esforço antes de mexer no texto**.
+- **Comece em `medium` e suba só com ganho comprovado na tarefa** (guia oficial do Opus, "Calibrate effort": `medium` iguala ou supera o `high` da versão anterior; teste vários níveis nos seus casos e reserve `xhigh`/`max` para ganho medido). Para o modelo pensar menos, **baixe o esforço antes de mexer no texto**.
 - **Não escreva "pense com calma", "pense passo a passo" ou parecido** nos prompts de delegação: o modelo já raciocina e o esforço é o controle.
-- O Haiku não aceita esforço. No Sonnet 5.5 o padrão oficial é `high`: use `medium` em código bem especificado e curto, `high` em frente difícil ou longa, e `xhigh`/`max` só com ganho medido (em trabalho já especificado abrem revisões próprias e ampliam o escopo).
+- O Haiku não aceita esforço. No Sonnet o padrão oficial é `high`: use `medium` em código bem especificado e curto, `high` em frente difícil ou longa, e `xhigh`/`max` só com ganho medido (em trabalho já especificado abrem revisões próprias e ampliam o escopo).
 
 ## 3. Quem faz cada natureza
 
@@ -49,16 +51,16 @@ Olhe o tamanho, se a tarefa se divide em frentes independentes e se as frentes t
 
 | Natureza | Quem | Modelo [padrão] |
 |---|---|---|
-| Mecânico puro, zero julgamento | `@worker` (`hebe-orchestrator:worker`) | Haiku 4.5 [sem esforço] |
+| Mecânico puro, zero julgamento | `@worker` (`hebe-orchestrator:worker`) | Haiku [sem esforço] |
 | Código especificado + análise | `@code-worker` (`hebe-orchestrator:code-worker`) | Sonnet [high] |
-| Dev complexo/novo, correção sutil | você, na sessão principal (ou etapa `model: 'opus'`) | Opus 5.5 [o da sessão] |
-| Design/frontend | `@design-worker` (`hebe-orchestrator:design-worker`) | Fable 5.1 [xhigh] |
-| Revisão crítica | `@reviewer` (`hebe-orchestrator:reviewer`) | Fable 5.1 [xhigh] |
-| Decisão difícil, veredito de alto risco | `@advisor` (`hebe-orchestrator:advisor`) | Opus 5.5 [high] |
+| Dev complexo/novo, correção sutil | você, na sessão principal (ou etapa `model: 'opus'`) | Opus [o da sessão] |
+| Design/frontend | `@design-worker` (`hebe-orchestrator:design-worker`) | Opus [medium] — Fable desativado |
+| Revisão crítica | `@reviewer` (`hebe-orchestrator:reviewer`) | Opus [high] — Fable desativado |
+| Decisão difícil, veredito de alto risco | `@advisor` (`hebe-orchestrator:advisor`) | Opus [high] |
 
 - **Código nunca vai pro Haiku.** Na dúvida entre dois níveis, suba. O roteamento é seu, não do Jev.
-- **Quem constrói não revisa — pelo modelo que rodou de fato.** Construído em Fable → `@reviewer` com override `opus`. Construído em Opus (inclusive por fallback do Fable) → `@reviewer` em Fable. Sem modelo forte diferente disponível: revise em contexto novo e me avise que a independência caiu; em segurança de alto risco, pare e pergunte. Segurança de alto risco: o `@reviewer` acha, o `@advisor` (em `max`, via UltraCode) ou a skill `hebe-sec-audit` adjudica — nunca num modelo só.
-- **Fallback de Fable (crédito semanal):** confira o modelo que rodou — o app pode falhar, pedir consentimento pra créditos pagos ou trocar de modelo sozinho. Se falhou, reinvoque o MESMO agente com override `opus`. Se o app pedir créditos pagos, a decisão é minha. Sempre avise numa linha: `⚠️ Fable indisponível → rodei @<agente> em Opus 5.5.` Nunca desça pra Sonnet/Haiku no núcleo criativo/crítico, e nunca em silêncio.
+- **Quem constrói não revisa — pelo modelo que rodou de fato, dentro do que está ativo.** Com o Fable desativado: construído em Sonnet (`@code-worker`) → `@reviewer` em Opus é independente de modelo. Construído em Opus (sessão principal, `@advisor`, `@design-worker`) → o `@reviewer` revisa em contexto novo, mas o modelo é o mesmo: **o Codex GPT-6 Astra entra como segunda lente automática** (seção 6). Se o Astra não estiver disponível ou falhar, **me diga numa linha que a independência de modelo caiu**. Segurança de alto risco: a cadeia de lentes está na seção 6.
+- **Fable desativado (estado oficial desta versão):** vale até ordem minha ou até sair um Fable novo (nesse caso, me pergunte se volta). Não há fallback a fazer, porque nada é roteado para Fable: não invoque agente com override `fable` e não use `model: 'fable'` em etapa de Workflow. Se eu mandar reativar, siga a seção "Fable desativado" da skill `orchestrator-guide`.
 
 ## 4. Portão do plano (Jev)
 
@@ -112,8 +114,8 @@ JSON
 
 - Solo Sonnet: `agent(p, {model: 'sonnet', effort: '<pela seção 2>'})` em todas as etapas de construção.
 - Solo Opus: `agent(p, {model: 'opus', effort: '<pela seção 2>'})`.
-- Mista: `agent(p, {agentType: 'hebe-orchestrator:<papel>', effort: '<pela seção 2>'})` — `model: 'opus'` no `reviewer` quando o construtor foi Fable; `effort: 'max'` no `advisor` para veredito de alto risco; `worker` sem esforço.
-- Etapa que volta `null` (erro terminal, crédito do Fable, etapa pulada) **nunca** some em silêncio: refaça com `model: 'opus'` quando for design ou revisão, e me avise.
+- Mista: `agent(p, {agentType: 'hebe-orchestrator:<papel>', effort: '<pela seção 2>'})` — `design-worker` e `reviewer` já rodam em Opus (Fable desativado); `effort: 'max'` no `advisor` para veredito de alto risco; `worker` sem esforço.
+- Etapa que volta `null` (erro terminal, etapa pulada) **nunca** some em silêncio: refaça a etapa e me avise.
 
 **Ferramenta Agent** é o caminho sem pedido meu: delegue com o `subagent_type` da seção 3 (esforço do frontmatter) e, se a estratégia certa for UltraCode, sugira numa linha — `Isso divide em N frentes; rodo em UltraCode com Sonnet?`. Meu "sim" conta como pedido.
 
@@ -135,3 +137,29 @@ JSON
 Você mesmo. No fim, reporte: a estratégia e por quê; o que cada frente fez, em que modelo (o que rodou de fato) e esforço; as decisões do Jev (`decision_id`, tipo, resultado, modo); e onde qualidade e custo caíram ou subiram.
 
 Se o script não estiver em `${CLAUDE_PLUGIN_ROOT}`, localize com `ls ~/.claude/plugins/cache/*/hebe-orchestrator/*/scripts/jev_decide.py`. Sem Jev configurado, o fluxo é o de antes: o plano espera minha aprovação, desempate é seu, escalada segue "na dúvida, suba".
+
+### Segunda lente de revisão: Codex GPT-6 Astra
+
+O Astra **complementa** o `@reviewer`; nunca o substitui.
+
+- **Quando você aciona sozinho:** sempre que o trabalho foi construído em Opus (a independência de modelo cairia) e sempre em segurança, arquitetura ou refactor grande. Fora desses casos, só quando eu pedir.
+- **Como acionar:** pelo plugin oficial do Codex (`openai-codex`), em modo somente leitura. Eu digito `/codex:adversarial-review --model gpt-6-astra` (com `--base <ref>` para revisar commits). Você roda pelo Bash:
+
+  ```bash
+  node "$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/ | sort -V | tail -1)scripts/codex-companion.mjs" adversarial-review --model gpt-6-astra --scope working-tree --json
+  ```
+
+  Isso vale para mudanças ainda não commitadas; para commits, `--base <ref>` no lugar de `--scope working-tree`. Rode em segundo plano (`run_in_background`) quando for longo. O retorno é um veredito curto em JSON.
+
+  **Auditoria de código que já existe (sem diff):** os dois modos acima só revisam diferenças do git. Com a árvore limpa o diff vem vazio, e a revisão não cobre nada. Nesse caso, use uma tarefa somente leitura (sem `--write`) e escreva no pedido os caminhos, o objetivo e o escopo:
+
+  ```bash
+  node "$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/ | sort -V | tail -1)scripts/codex-companion.mjs" task --model gpt-6-astra --effort high --json "Auditoria somente leitura de <caminhos>. Objetivo: <o que procurar>. Liste os arquivos que leu e os achados com arquivo e linha."
+  ```
+
+  **Cobertura antes de contar a lente:** só conte a segunda lente como feita se o retorno mostrar que o Codex leu o que devia. Na revisão de mudanças, o diff não pode estar vazio. Na auditoria, a lista de arquivos lidos precisa cobrir o escopo.
+- **O que fazer com o resultado:** confira cada achado no código antes de agir. Achado do Codex é hipótese, não ordem. Segundo o piloto de 2026-10-26, ele achou cerca de 16% do que o Opus achou, sem nenhum alarme falso, e pegou defeitos que o Opus deixou passar (fluxo de dados, ordem das gravações, garantias de apagamento). Por isso ele complementa e não substitui.
+- **Se o Codex não estiver disponível ou falhar:** me diga numa linha que a independência de modelo caiu.
+- **Não use** em repositório de terceiros ou de origem não confiável: o Codex do plugin oficial roda com a minha configuração completa, incluindo os conectores.
+- **Segurança de alto risco:** o `@reviewer` acha, o Astra é a segunda lente, o plugin `claude-security` é a terceira lente opcional e o `@advisor` adjudica. Se a cadeia ficar só em Opus (Astra indisponível), diga isso e pergunte antes de tratar como definitivo.
+- O código é enviado à OpenAI. Já aprovei isso para os meus projetos, e a regra de não usar em repositório de terceiros cobre o resto.

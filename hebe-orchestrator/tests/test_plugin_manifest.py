@@ -45,7 +45,7 @@ class ManifestTests(unittest.TestCase):
                 self.assertIn(meta["model"], MODELS)
                 self.assertTrue(meta.get("description"))
                 if meta["model"] == "haiku":
-                    self.assertNotIn("effort", meta, "o Haiku 4.5 não aceita esforço")
+                    self.assertNotIn("effort", meta, "o Haiku não aceita esforço")
                 elif "effort" in meta:
                     self.assertIn(meta["effort"], EFFORTS)
 
@@ -64,6 +64,28 @@ class ManifestTests(unittest.TestCase):
                      PLUGIN / "codex-skills" / "orchestrate" / "SKILL.md"]:
             with self.subTest(file=str(path.relative_to(PLUGIN))):
                 self.assertIsNone(re.search(r"\$\d", path.read_text(encoding="utf-8")))
+
+    def test_astra_second_lens_is_the_same_doctrine_in_all_three_files(self):
+        # A regra da segunda lente (Codex GPT-6 Astra) não pode divergir entre o comando, a skill e o revisor.
+        files = [PLUGIN / "commands" / "orchestrate.md", PLUGIN / "skills" / "orchestrator-guide" / "SKILL.md",
+                 PLUGIN / "agents" / "reviewer.md"]
+        needed = ["/codex:adversarial-review --model gpt-6-astra", "codex-companion.mjs\" adversarial-review --model gpt-6-astra",
+                  "--scope working-tree --json", "--base <ref>", "hipótese, não ordem", "16%", "independência de modelo",
+                  "repositório de terceiros", "claude-security", "OpenAI"]
+        for path in files:
+            text = path.read_text(encoding="utf-8")
+            for fragment in needed:
+                with self.subTest(file=path.name, fragment=fragment):
+                    self.assertIn(fragment, text)
+
+    def test_no_leftover_experiment_branch_text(self):
+        for path in [*PLUGIN.rglob("*.md"), *PLUGIN.rglob("*.json"), REPO / "README.md", REPO / ".claude-plugin" / "marketplace.json"]:
+            if "tests" in path.parts:
+                continue
+            with self.subTest(file=str(path.relative_to(REPO))):
+                text = path.read_text(encoding="utf-8")
+                for stale in ("for-claude", "EXPERIMENTO", "branch experimental", "Codex como executor"):
+                    self.assertNotIn(stale, text)
 
     def test_scripts_referenced_by_docs_exist(self):
         for name in ("jev.py", "jev_decide.py", "jev_rules.py"):

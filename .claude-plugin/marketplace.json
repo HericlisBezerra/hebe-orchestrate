@@ -8,8 +8,8 @@
     {
       "name": "hebe-orchestrator",
       "source": "./hebe-orchestrator",
-      "description": "Orquestração multi-modelo qualidade-primeiro no Claude Code: cada tarefa no modelo certo pela natureza dela — mecânico→Haiku 4.5, código especificado→Sonnet, dev complexo→Opus 5.5, design e revisão→Fable 5.1, decisão difícil→Opus 5.5. O Jev (TypeSafe) aprova planos de baixo risco, desempata escolhas reversíveis e decide escalar ou aceitar — regras duras em código nunca deixam ele decidir mensagem, deploy, dinheiro ou segurança. Escolhe a estratégia (direto, UltraCode com um modelo só, ou orquestração mista) e o esforço de cada frente pela dificuldade — nada fixo —, com variável de host Codex (GPT-6 Luna/Sol/Astra, GPT-5.6 Terra de reserva).",
-      "version": "0.5.1"
+      "description": "Orquestração multi-modelo qualidade-primeiro no Claude Code: cada tarefa no modelo certo pela natureza dela — mecânico→Haiku, código especificado→Sonnet, dev complexo→Opus, design e revisão→Opus (Fable desativado até nova ordem do usuário), Codex GPT-6 Astra como segunda lente automática de revisão, decisão difícil→Opus. O Jev (TypeSafe) aprova planos de baixo risco, desempata escolhas reversíveis e decide escalar ou aceitar — regras duras em código nunca deixam ele decidir mensagem, deploy, dinheiro ou segurança. Escolhe a estratégia (direto, UltraCode com um modelo só, ou orquestração mista) e o esforço de cada frente pela dificuldade — nada fixo —, com variável de host Codex (GPT-6 Luna/Sol/Astra, GPT-5.6 Terra de reserva).",
+      "version": "0.5.2"
     }
   ]
 }

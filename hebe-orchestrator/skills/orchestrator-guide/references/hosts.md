@@ -2,26 +2,28 @@
 
 A doutrina é uma só — estratégia primeiro (direto, UltraCode solo ou mista), papel pela natureza da tarefa, esforço pela dificuldade de cada frente, Jev nos portões, quem constrói não revisa. O que muda por host é o modelo que ocupa cada papel e a forma de delegar. Observado em **2026-09-29**: catálogo do app Claude (Claude Code 2.1.284) e `models_cache.json` do app Codex (cliente 0.158.0). Catálogos mudam; confira antes de fixar.
 
+> **Claude, Fable desativado:** `@design-worker` e `@reviewer` rodam em Opus até nova ordem do usuário ou até sair um Fable novo. O Codex GPT-6 Astra entra como segunda lente de revisão pelo plugin oficial do Codex, a partir do Claude (regra no `/orchestrate`, seção 6, e na skill `orchestrator-guide`).
+
 ## Estratégia por host
 
 | Estratégia | Claude (app) | Codex (app) |
 |---|---|---|
-| Direto | sessão principal (Opus 5.5) | root (`gpt-6-sol`) |
-| UltraCode solo — amplo, especificado ou moderado | Workflow com todas as etapas em `sonnet` (alias `sonnet` = Sonnet 5.5 no Claude Code 2.1.284 ou mais novo) | root `gpt-6-sol` com effort `ultra` (max com delegação) |
-| UltraCode solo — amplo e difícil | Workflow com todas as etapas em `opus` (Opus 5.5) | root `gpt-6-astra` com effort `ultra` (xhigh com delegação) — única exceção ao "Astra nunca como root", a pedido do usuário |
+| Direto | sessão principal (Opus) | root (`gpt-6-sol`) |
+| UltraCode solo — amplo, especificado ou moderado | Workflow com todas as etapas em `sonnet` (apelido `sonnet`) | root `gpt-6-sol` com effort `ultra` (max com delegação) |
+| UltraCode solo — amplo e difícil | Workflow com todas as etapas em `opus` | root `gpt-6-astra` com effort `ultra` (xhigh com delegação) — única exceção ao "Astra nunca como root", a pedido do usuário |
 | Orquestração mista | Workflow com `agentType` por papel e esforço por etapa (Agent sem pedido do usuário, com o esforço do frontmatter) | ondas de até 3 `spawn_agent` com `model` e `reasoning_effort` por filho |
 
 ## Matriz papel × host (esforço típico — decidido por frente)
 
 | Papel | Claude (app) | Codex (app) |
 |---|---|---|
-| Mecânico | `@worker` · Haiku 4.5 · sem esforço | `gpt-6-luna` · high |
-| Código especificado / análise | `@code-worker` · Sonnet 5.5 · high (xhigh em frente longa) | `gpt-6-sol` · high (xhigh em frente longa) |
-| Dev complexo | sessão principal · Opus 5.5 · medium (high/xhigh com ganho comprovado; max em problema único) | root `gpt-6-sol` · xhigh (max em problema único); `gpt-6-astra` no mais difícil de ponta a ponta |
-| Design / frontend | `@design-worker` · Fable 5.1 · xhigh | `gpt-6-astra` · xhigh (fallback `gpt-6-sol`) |
-| Revisão crítica | `@reviewer` · Fable 5.1 · xhigh (`opus` se o construtor foi Fable) | o modelo forte que **não** construiu · xhigh · `fork_turns: "none"` |
-| Decisão difícil / veredito | `@advisor` · Opus 5.5 · high (max no veredito) | `gpt-6-astra` · xhigh; veredito de alto risco em max com o forte que não achou |
-| Planejamento / costura | sessão principal · Opus 5.5 · medium | root `gpt-6-sol` · xhigh |
+| Mecânico | `@worker` · Haiku · sem esforço | `gpt-6-luna` · high |
+| Código especificado / análise | `@code-worker` · Sonnet · high (xhigh em frente longa) | `gpt-6-sol` · high (xhigh em frente longa) |
+| Dev complexo | sessão principal · Opus · medium (high/xhigh com ganho comprovado; max em problema único) | root `gpt-6-sol` · xhigh (max em problema único); `gpt-6-astra` no mais difícil de ponta a ponta |
+| Design / frontend | `@design-worker` · Opus (Fable desativado) · medium | `gpt-6-astra` · xhigh (fallback `gpt-6-sol`) |
+| Revisão crítica | `@reviewer` · Opus (Fable desativado) · high (contexto novo se o construtor foi Opus; Codex `gpt-6-astra` como segunda lente) | o modelo forte que **não** construiu · xhigh · `fork_turns: "none"` |
+| Decisão difícil / veredito | `@advisor` · Opus · high (max no veredito) | `gpt-6-astra` · xhigh; veredito de alto risco em max com o forte que não achou |
+| Planejamento / costura | sessão principal · Opus · medium | root `gpt-6-sol` · xhigh |
 | Portões (Jev) | `scripts/jev_decide.py` | o mesmo script — não depende de host |
 
 No Claude, o UltraCode (ferramenta Workflow) só roda quando o usuário digitou o comando ou escreveu "ultracode"; quando o Claude aciona a orquestração sozinho, ele sugere numa linha.
@@ -71,9 +73,10 @@ spawn_agent{task_name: "review-auth", model: "gpt-6-astra", reasoning_effort: "x
 - Nenhum filho `gpt-6-luna` foi observado ainda.
 - Não se sabe se o schema do `spawn_agent` na 0.158 ainda expõe `model` e `reasoning_effort`.
 - O Astra como especialista em design visual não tem fonte oficial; a escolha vem de "na dúvida, suba" e do computer use. Faça A/B contra o Sol antes de fixar.
-- O descarte silencioso do esforço no Haiku 4.5 e a precedência de esforço no Workflow vêm do código do Claude Code, não da documentação.
+- O descarte silencioso do esforço no Haiku e a precedência de esforço no Workflow vêm do código do Claude Code, não da documentação.
 - `persistent` como modo de sessão é inferência da pesquisa, sem fonte oficial.
-- O comportamento do app sem crédito de Fable (falha, consentimento para créditos pagos ou troca automática de modelo) não foi testado.
+- Ao reativar o Fable, o comportamento do app sem crédito dele (falha, consentimento para créditos pagos ou troca automática de modelo) não foi testado.
+- O desempenho do Astra como segunda lente de revisão vem do piloto de 2026-10-26; meça de novo antes de tratar os números como regra.
 - Nenhum nível de esforço foi medido quanto a ganho de qualidade, em nenhum dos hosts.
 
-Fontes: `~/.codex/models_cache.json` (2026-09-29), [modelos da API](https://developers.openai.com/api/docs/models/gpt-6-astra), [preços](https://developers.openai.com/api/docs/pricing), [prompts para o GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra), [modelos no Codex](https://learn.chatgpt.com/docs/models), [openai/codex#41206](https://github.com/openai/codex/pull/41206), [migração para Sonnet 5.5](https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide).
+Fontes: `~/.codex/models_cache.json` (2026-09-29), [modelos da API](https://developers.openai.com/api/docs/models/gpt-6-astra), [preços](https://developers.openai.com/api/docs/pricing), [prompts para o GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra), [modelos no Codex](https://learn.chatgpt.com/docs/models), [openai/codex#41206](https://github.com/openai/codex/pull/41206), [guia de migração do Sonnet](https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide).

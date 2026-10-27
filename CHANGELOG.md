@@ -1,17 +1,35 @@
 # Changelog
 
-## Não lançado (próxima versão) — esforço no Opus 5.5 conforme o guia oficial
+## 0.5.2 — 2026-10-26
+
+**Fable desativado como padrão oficial.**
+- `@design-worker` (Opus, `medium`) e `@reviewer` (Opus, `high`) deixam de rodar em Fable. Vale até ordem do usuário ou até sair um Fable novo, e nesse caso o orquestrador pergunta se volta.
+- Nada é roteado para Fable: nem agente, nem etapa de Workflow. Para reativar, só com ordem do usuário: trocar `model: opus` por `model: fable` em `agents/design-worker.md` e `agents/reviewer.md`.
+- Custo da decisão: quando o construtor foi Opus, a revisão passa a ser do mesmo modelo. A segunda lente abaixo compensa isso.
+
+**Codex GPT-6 Astra como segunda lente automática de revisão.**
+- Complementa o `@reviewer`, nunca o substitui. A mesma regra está em `commands/orchestrate.md`, em `skills/orchestrator-guide/SKILL.md` e em `agents/reviewer.md`.
+- O orquestrador aciona sozinho sempre que o trabalho foi construído em Opus e sempre em segurança, arquitetura ou refactor grande. Fora desses casos, só a pedido do usuário.
+- Roda pelo plugin oficial do Codex (`openai-codex`), em modo somente leitura: `/codex:adversarial-review --model gpt-6-astra` (com `--base <ref>` para commits) ou, pelo Bash, `codex-companion.mjs adversarial-review --model gpt-6-astra --scope working-tree --json`. O retorno é um veredito curto em JSON.
+- Achado do Codex é hipótese: confere-se cada um no código antes de agir. No piloto de 2026-10-26 ele achou cerca de 16% do que o Opus achou, sem nenhum alarme falso, e pegou defeitos que o Opus deixou passar (fluxo de dados, ordem das gravações, garantias de apagamento).
+- Se o Codex não estiver disponível ou falhar, o orquestrador avisa numa linha que a independência de modelo caiu. Não se usa em repositório de terceiros ou de origem não confiável, porque o Codex do plugin roda com a configuração completa do usuário, conectores incluídos. O código é enviado à OpenAI.
+- Segurança de alto risco: o `@reviewer` acha, o Astra é a segunda lente, o plugin `claude-security` é a terceira, opcional, e o `@advisor` adjudica.
+
+**Versões de modelo sem número.**
+- Descrições, tabelas, README e docs falam só em Haiku, Sonnet, Opus e Fable, sempre a versão mais recente, pelo apelido. Ficam os identificadores de modelo do Codex (`gpt-6-astra` e afins) e o título de guias oficiais citados.
+
+**Esforço no Opus conforme o guia oficial** (estava como "não lançado").
 
 Base: *Prompting Claude Opus 5.5* (platform.claude.com, seção "Calibrate effort") e a newsletter Gruponomics "Opus 5.5: como pedir".
 
-- **`medium` é o ponto de partida** no Opus 5.5 (padrão oficial; iguala ou supera o Opus 5 em `high`). `high` para julgamento que já pesa. `xhigh` e `max` só com ganho **medido** na tarefa, e `max` nunca por garantia. Antes, `xhigh` era o ponto de partida de todo trabalho que pensa.
-- No mesmo nível o Opus 5.5 pensa mais por turno que o Opus 5, principalmente em `xhigh` e `max`: o `xhigh` de antes custa mais agora.
+- **`medium` é o ponto de partida** no Opus (padrão oficial; iguala ou supera a versão anterior em `high`). `high` para julgamento que já pesa. `xhigh` e `max` só com ganho **medido** na tarefa, e `max` nunca por garantia. Antes, `xhigh` era o ponto de partida de todo trabalho que pensa.
+- No mesmo nível o Opus pensa mais por turno que antes, principalmente em `xhigh` e `max`: o `xhigh` de antes custa mais agora.
 - **Para pensar menos, baixe o esforço** antes de mexer no texto. Proibido "pense com calma / passo a passo" nos prompts de delegação.
 - Prompts de delegação de **construção** ganham o bloco `Decisões fechadas (não reabra)`. Fora de `@reviewer` e `@advisor`, que existem para reexaminar.
-- `@advisor`: `xhigh` → `high` (`max` continua na etapa do veredito de segurança). `@design-worker` e `@reviewer` seguem em `xhigh` no Fable, sem dado oficial para esse modelo.
-- `settings.example.json`: a sessão principal (Opus 5.5) passa de `xhigh` para `medium`.
-- Sonnet 5.5: `@code-worker` continua em `high`. Orientação registrada: `medium` em código bem especificado e curto, `xhigh`/`max` só com ganho medido.
-- Nenhuma mudança no Jev, no Codex nem nas regras de segurança. **Nenhum nível foi medido nesta instalação ainda.**
+- `@advisor`: `xhigh` → `high` (`max` continua na etapa do veredito de segurança). `@design-worker` passa de `xhigh` para `medium` e `@reviewer` de `xhigh` para `high`, agora em Opus.
+- `settings.example.json`: a sessão principal passa de `xhigh` para `medium`.
+- Sonnet: `@code-worker` continua em `high`. Orientação registrada: `medium` em código bem especificado e curto, `xhigh`/`max` só com ganho medido.
+- Nenhuma mudança no Jev nem nas regras de segurança. A variante Codex só muda de versão, sem mudança de doutrina. **Nenhum nível de esforço foi medido nesta instalação ainda.**
 
 ## 0.5.1 — 2026-09-29
 

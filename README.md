@@ -12,17 +12,17 @@ The rule it enforces: **economy comes from not wasting the top model on genuinel
 
 ## Strategy first
 
-The first decision is not the model, it's the strategy. Sonnet 5.5 and Opus 5.5 each solve a lot of large tasks alone, and every hand-off between models costs context and latency.
+The first decision is not the model, it's the strategy. Sonnet and Opus each solve a lot of large tasks alone, and every hand-off between models costs context and latency.
 
 | Strategy | When | How |
 |---|---|---|
 | **Direct** | One piece, fits one context | The main session does it |
-| **Solo UltraCode** | Large and divisible, fronts of the same nature | Multi-agent workflow with every stage on one model — Sonnet 5.5 for specified/moderate work, Opus 5.5 for hard work |
+| **Solo UltraCode** | Large and divisible, fronts of the same nature | Multi-agent workflow with every stage on one model — Sonnet for specified/moderate work, Opus for hard work |
 | **Mixed orchestration** | Fronts of different natures | Each front on its own tier (table below) |
 
 Solo UltraCode and mixed orchestration run as a multi-agent workflow only when you typed the command or wrote "ultracode"; when Claude starts orchestrating on its own, it suggests it in one line.
 
-Then the **effort of each front**, by difficulty: start at `medium` (Opus 5.5's default; per Anthropic's guide it matches or beats Opus 5 at `high`), move to `high` for long specified work and weighty judgement, and reserve `xhigh` and `max` for where you have measured a quality gain — `max` for a single hard problem that is expensive to get wrong, never as insurance. UltraCode is not a level above Max — it's the multi-agent strategy, with its own effort per stage.
+Then the **effort of each front**, by difficulty: start at `medium` (Opus's default; per Anthropic's guide it matches or beats the previous Opus at `high`), move to `high` for long specified work and weighty judgement, and reserve `xhigh` and `max` for where you have measured a quality gain — `max` for a single hard problem that is expensive to get wrong, never as insurance. UltraCode is not a level above Max — it's the multi-agent strategy, with its own effort per stage.
 
 ## The routing table
 
@@ -31,23 +31,37 @@ Then the **effort of each front**, by difficulty: start at `medium` (Opus 5.5's 
 | Mechanical, zero judgement — grep, rename, dictated edit, run a command | `@worker` | `haiku` | `gpt-6-luna` |
 | **Specified code + analysis** — implement from a plan, read, map, refactor, test | `@code-worker` | `sonnet` | `gpt-6-sol` |
 | Complex/novel development, subtle bug fixing, reasoning-led code | *main session* | `opus` | root `gpt-6-sol` |
-| Design & frontend — design system, prototype, UI/UX, layout, copy | `@design-worker` | `fable` | `gpt-6-astra` |
-| Critical review — code review, hunting security flaws, frontend critique | `@reviewer` | `fable` (`opus` if Fable built it) | the strong model that didn't build it |
+| Design & frontend — design system, prototype, UI/UX, layout, copy | `@design-worker` | `opus` ¹ | `gpt-6-astra` |
+| Critical review — code review, hunting security flaws, frontend critique | `@reviewer` | `opus` ¹ (+ Codex `gpt-6-astra` as a second lens) | the strong model that didn't build it |
 | Hard decisions, architecture, trade-offs, final verdict on high risk | `@advisor` | `opus` | `gpt-6-astra` |
+
+¹ **Fable is off by default** until the user says otherwise or a new Fable ships. To turn it back on, and only on the user's order, change `model: opus` to `model: fable` in `agents/design-worker.md` and `agents/reviewer.md`.
 
 `gpt-5.6-terra` is the Codex fallback for Sol (there is no GPT-6 Terra). Full matrix, model particularities and what is still unverified: [`references/hosts.md`](hebe-orchestrator/skills/orchestrator-guide/references/hosts.md).
 
-Models are set by **alias**, never by pinned ID — each agent always runs the newest model of its family that your Claude Code version knows, with no manual bump when a new version ships. As of September 2026 that is Haiku 4.5, Sonnet 5.5, Opus 5.5 and Fable 5.1.
+Models are set by **alias**, never by pinned ID or version number — each agent always runs the newest model of its family that your Claude Code version knows, with no manual bump when a new version ships.
 
 ## Rules that don't bend
 
 - **Code never goes to the cheapest model.** Reading, evaluating or writing code takes engineering judgement. The floor is Sonnet; the mechanical tier only does work with no decision in it.
 - **Code has two tiers, not one.** Specified/routine/parallel work goes to Sonnet; complex, novel, or subtle work stays on Opus in your main session. Downgrading hard development costs iterations and bugs — and promoting boilerplate to the top model is the waste you were trying to avoid. Both mistakes cost.
-- **High-risk security never closes on a single model.** The reviewer *finds*; the advisor *adjudicates*. Different models catch different bugs.
-- **Whoever builds doesn't review.** Fable-built design is reviewed by the reviewer running on Opus.
-- **Don't split across models what one model does well.** Solo UltraCode on Sonnet 5.5 or Opus 5.5 beats a mixed pipeline when the fronts are all the same kind of work.
+- **High-risk security never closes on a single model.** The reviewer *finds*; Codex GPT-6 Astra is the second lens; the `claude-security` plugin is an optional third lens; the advisor *adjudicates*. Different models catch different bugs.
+- **Whoever builds doesn't review.** Sonnet-built work is reviewed by Opus. Opus-built work is reviewed in a fresh context, and Codex GPT-6 Astra joins automatically as a second lens because model independence would otherwise drop. It complements the reviewer and never replaces it; see [Second review lens](#second-review-lens-codex-gpt-6-astra).
+- **Don't split across models what one model does well.** Solo UltraCode on Sonnet or Opus beats a mixed pipeline when the fronts are all the same kind of work.
 - **When in doubt between two tiers, go up.** The cost of downgrading — rework, a shipped bug, poor design — almost always exceeds the tokens saved.
 - **Delegation offloads the work, not the responsibility.** Cheap output isn't truth until the strong model reviews what matters: correctness, security, and every money or permission flow.
+
+## Second review lens (Codex GPT-6 Astra)
+
+Codex GPT-6 Astra **complements** `@reviewer` and never replaces it. The orchestrator starts it on its own whenever the work was built on Opus (model independence would drop) and for security, architecture or large refactors; otherwise only when you ask.
+
+It runs through the official Codex plugin (`openai-codex`), read-only. You type `/codex:adversarial-review --model gpt-6-astra` (add `--base <ref>` to review commits), or the orchestrator runs it through Bash:
+
+```bash
+node "$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/ | sort -V | tail -1)scripts/codex-companion.mjs" adversarial-review --model gpt-6-astra --scope working-tree --json
+```
+
+Use `--base <ref>` instead of `--scope working-tree` to review commits; it runs in the background when long and returns a short JSON verdict. Check every finding against the code before acting: a Codex finding is a hypothesis, not an order. In the 2026-10-26 pilot it found about 16% of what Opus found, with no false alarms, and caught defects Opus missed (data flow, write ordering, deletion guarantees) — so it complements and does not replace. If Codex is unavailable or fails, the orchestrator says in one line that model independence dropped. **Don't use it on third-party or untrusted repositories**: the official plugin's Codex runs with your full configuration, connectors included. The code is sent to OpenAI. For high-risk security: reviewer finds, Astra is the second lens, `claude-security` the optional third, advisor adjudicates.
 
 ## Jev: assertive decisions (optional)
 
@@ -112,8 +126,8 @@ hebe-orchestrate/
     ├── agents/                         # 5 subagents, isolated context · default effort
     │   ├── worker.md                   # haiku · none (Haiku takes no effort)
     │   ├── code-worker.md              # sonnet · high
-    │   ├── design-worker.md            # fable · xhigh
-    │   ├── reviewer.md                 # fable · xhigh
+    │   ├── design-worker.md            # opus · medium (Fable off)
+    │   ├── reviewer.md                 # opus · high (Fable off)
     │   └── advisor.md                  # opus · high
     ├── codex-skills/orchestrate/       # the same doctrine for the Codex app
     ├── commands/orchestrate.md         # /orchestrate <task>

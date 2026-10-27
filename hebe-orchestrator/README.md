@@ -1,5 +1,7 @@
 # hebe-orchestrator — orquestração multi-modelo pro Claude Code (e variante Codex)
 
+> 🔒 **Fable desativado (estado oficial desta versão):** `@design-worker` e `@reviewer` rodam em Opus até nova ordem do usuário ou até sair um Fable novo. Para reativar, só com ordem do usuário: trocar `model: opus` por `model: fable` nos dois agentes. O Codex GPT-6 Astra entra como segunda lente automática de revisão (seção "Segunda lente de revisão").
+
 Empacota a estratégia **qualidade-primeiro** "cada tarefa no modelo certo pela natureza dela" num plugin reutilizável em qualquer projeto. O objetivo é a melhor qualidade por peça gastando o mínimo que essa qualidade permite — economia vem de não desperdiçar o modelo topo em trabalho mecânico, nunca de rebaixar o que exige julgamento.
 
 ## O que vem dentro
@@ -9,11 +11,11 @@ hebe-orchestrator/
 ├── .claude-plugin/plugin.json   # manifesto Claude Code
 ├── .codex-plugin/plugin.json    # manifesto Codex (aponta só pra codex-skills/)
 ├── agents/                      # subagents = contexto ISOLADO (offloada tokens da conversa)
-│   ├── worker.md                # haiku (Haiku 4.5) · sem esforço → SÓ mecânico sem julgamento
-│   ├── code-worker.md           # sonnet (Sonnet 5.5) · high    → implementação especificada + análise
-│   ├── design-worker.md         # fable (Fable 5.1) · xhigh     → design system, protótipo, UI/UX, frontend
-│   ├── reviewer.md              # fable (Fable 5.1) · xhigh     → code review, falhas de segurança, crítica de frontend
-│   └── advisor.md               # opus (Opus 5.5) · high         → decisão difícil, veredito de segurança (max)
+│   ├── worker.md               # haiku · sem esforço        → SÓ mecânico sem julgamento
+│   ├── code-worker.md          # sonnet · high              → implementação especificada + análise
+│   ├── design-worker.md        # opus · medium (Fable off)  → design system, protótipo, UI/UX, frontend
+│   ├── reviewer.md             # opus · high (Fable off)    → code review, falhas de segurança, crítica de frontend
+│   └── advisor.md              # opus · high                → decisão difícil, veredito de segurança (max)
 ├── skills/
 │   └── orchestrator-guide/
 │       ├── SKILL.md             # doutrina · disable-model-invocation (custo ZERO até chamar)
@@ -26,7 +28,7 @@ hebe-orchestrator/
 │   ├── jev.py                   # cliente TypeSafe/Jev (credencial protegida, só biblioteca padrão)
 │   └── jev_decide.py            # decisões assertivas: plan_gate, tiebreak, escalation + regras duras
 ├── tests/                       # python3 -m unittest discover -s tests (sem rede)
-├── settings.example.json        # sessão principal (Opus 5.5) em Extra
+├── settings.example.json        # sessão principal (Opus) em medium
 └── README.md
 ```
 
@@ -77,12 +79,30 @@ A chave é a mesma do `hebe-orchestrator-codex`; se ela já existe, pule o prime
 A primeira decisão do `/orchestrate` é a **estratégia**:
 
 - **Direto** — uma peça só: a sessão principal resolve.
-- **UltraCode solo** — tarefa grande e divisível, frentes da mesma natureza: todas as etapas no mesmo modelo, Sonnet 5.5 pro especificado/moderado ou Opus 5.5 pro difícil. Não divide entre modelos o que um modelo só faz bem.
-- **Orquestração mista** — frentes de naturezas diferentes: cada uma no seu nível (Haiku, Sonnet, Opus, Fable).
+- **UltraCode solo** — tarefa grande e divisível, frentes da mesma natureza: todas as etapas no mesmo modelo, Sonnet pro especificado/moderado ou Opus pro difícil. Não divide entre modelos o que um modelo só faz bem.
+- **Orquestração mista** — frentes de naturezas diferentes: cada uma no seu nível (Haiku, Sonnet, Opus; Fable desativado).
 
-Depois, o **esforço de cada frente** pela dificuldade: comece em `medium` (padrão do Opus 5.5, que segundo o guia da Anthropic iguala ou supera o Opus 5 em `high`), `high` pro especificado longo e o julgamento que já pesa, e reserve `xhigh` (Extra) e `max` para onde você mediu ganho — `max` pro problema único e caro de errar, nunca por garantia. UltraCode não é um nível acima do Max — é a estratégia multiagente, com esforço próprio em cada etapa.
+Depois, o **esforço de cada frente** pela dificuldade: comece em `medium` (padrão do Opus, que segundo o guia da Anthropic iguala ou supera o `high` da versão anterior), `high` pro especificado longo e o julgamento que já pesa, e reserve `xhigh` (Extra) e `max` para onde você mediu ganho — `max` pro problema único e caro de errar, nunca por garantia. UltraCode não é um nível acima do Max — é a estratégia multiagente, com esforço próprio em cada etapa.
 
-Onde isso é modulável: nas etapas do UltraCode (Workflow), cada uma com modelo e esforço escolhidos na hora — e o UltraCode só roda quando você digita `/orchestrate` ou escreve "ultracode"; quando o Claude aciona a orquestração sozinho, ele sugere numa linha. Pela ferramenta Agent vale o frontmatter (`@code-worker` high; `@design-worker`, `@reviewer`, `@advisor` xhigh; `@worker` sem, porque o Haiku não aceita). A sessão principal só você muda — o app não deixa uma sessão reprecificar os próprios turnos; o orquestrador lê o nível atual e pede o ajuste numa linha quando precisar. O Opus 5.5 vem em `medium` por padrão no app: o `settings.example.json` o coloca em Extra. **Não ligue o `ultracode` global** — na versão atual ele trava a sessão em xhigh (Max indisponível) e transforma toda tarefa em workflow.
+Onde isso é modulável: nas etapas do UltraCode (Workflow), cada uma com modelo e esforço escolhidos na hora — e o UltraCode só roda quando você digita `/orchestrate` ou escreve "ultracode"; quando o Claude aciona a orquestração sozinho, ele sugere numa linha. Pela ferramenta Agent vale o frontmatter (`@code-worker` high; `@design-worker` medium; `@reviewer` e `@advisor` high; `@worker` sem, porque o Haiku não aceita). A sessão principal só você muda — o app não deixa uma sessão reprecificar os próprios turnos; o orquestrador lê o nível atual e pede o ajuste numa linha quando precisar. O Opus vem em `medium` por padrão no app, e o `settings.example.json` mantém a sessão principal em `medium`. **Não ligue o `ultracode` global** — na versão atual ele trava a sessão em xhigh (Max indisponível) e transforma toda tarefa em workflow.
+
+## Segunda lente de revisão (Codex GPT-6 Astra)
+
+O Astra **complementa** o `@reviewer`; nunca o substitui. A regra é a mesma no `/orchestrate`, na skill `orchestrator-guide` e no `@reviewer`.
+
+- **Quando o orquestrador aciona sozinho:** sempre que o trabalho foi construído em Opus (a independência de modelo cairia) e sempre em segurança, arquitetura ou refactor grande. Fora desses casos, só quando o usuário pedir.
+- **Como acionar:** pelo plugin oficial do Codex (`openai-codex`), em modo somente leitura. Você digita `/codex:adversarial-review --model gpt-6-astra` (com `--base <ref>` para revisar commits). O orquestrador roda pelo Bash:
+
+  ```bash
+  node "$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/ | sort -V | tail -1)scripts/codex-companion.mjs" adversarial-review --model gpt-6-astra --scope working-tree --json
+  ```
+
+  Isso vale para mudanças ainda não commitadas; para commits, `--base <ref>` no lugar de `--scope working-tree`. Em segundo plano quando for longo. O retorno é um veredito curto em JSON.
+- **O que fazer com o resultado:** conferir cada achado no código antes de agir. Achado do Codex é hipótese, não ordem. Segundo o piloto de 2026-10-26, ele achou cerca de 16% do que o Opus achou, sem nenhum alarme falso, e pegou defeitos que o Opus deixou passar (fluxo de dados, ordem das gravações, garantias de apagamento). Por isso complementa e não substitui.
+- **Se o Codex não estiver disponível ou falhar:** o orquestrador diz numa linha que a independência de modelo caiu.
+- **Não usar** em repositório de terceiros ou de origem não confiável: o Codex do plugin oficial roda com a sua configuração completa, incluindo os conectores.
+- **Segurança de alto risco:** o `@reviewer` acha, o Astra é a segunda lente, o plugin `claude-security` é a terceira lente opcional e o `@advisor` adjudica.
+- O código é enviado à OpenAI. Aprove isso só para os seus projetos; a regra de não usar em repositório de terceiros cobre o resto.
 
 ## Variante Codex
 
@@ -103,12 +123,12 @@ Ele planeja, passa o plano pelo portão do Jev (ou pela sua aprovação, se o Je
 
 ## Ajuste de modelo
 
-O `settings.example.json` põe a sessão principal (Opus 5.5) em Extra. Copie o `modelSettings` pro `~/.claude/settings.json`. Os `model:` dos subagents usam **alias** (`opus`, `sonnet`, `fable`, `haiku`) — assim cada agente roda sempre no modelo **mais atual** da sua família, sem precisar bumpar quando sair versão nova. Quem resolve o alias é o Claude Code embutido no app: no 2.1.284 (verificado) `sonnet` → Sonnet 5.5, `opus` → Opus 5.5, `fable` → Fable 5.1. `design-worker` e `reviewer` rodam em Fable. **Não há fallback automático de modelo no Claude Code** — quando o crédito semanal do Fable acaba, a doutrina manda o orquestrador reinvocar o mesmo agente com override para Opus e **avisar você**.
+O `settings.example.json` põe a sessão principal (Opus) em `medium`. Copie o `modelSettings` pro `~/.claude/settings.json`. Os `model:` dos subagents usam **alias** (`opus`, `sonnet`, `fable`, `haiku`) — assim cada agente roda sempre no modelo **mais atual** da sua família, sem número fixo e sem precisar bumpar quando sair versão nova. Quem resolve o alias é o Claude Code embutido no app. `design-worker` e `reviewer` rodam em Opus, porque o **Fable está desativado** até nova ordem do usuário ou até sair um Fable novo; para reativar, troque `model: opus` por `model: fable` nos dois agentes, só com ordem do usuário.
 
 ## Ressalvas honestas
 
 - **Overhead:** orquestrar tem custo de contexto e latência por handoff. Em tarefa pequena, rodar Sonnet direto pode sair mais barato. O plugin já é instruído a avisar quando não vale a pena.
 - **Auto-delegação é irregular:** se o Claude não chamar o subagent sozinho, invoque com `@nome`.
 - **Números variam:** o "~96% da performance por ~46% do custo" é benchmark da Anthropic, não promessa pro seu código. Meça o seu uso. E o alvo aqui é qualidade com economia, não o menor número possível.
-- **Código nunca vai pra Haiku:** ler/entender/auditar código exige julgamento → piso Sonnet. Haiku só faz o braçal mecânico. Design e revisão (Fable) não descem pra Sonnet/Haiku — sem Fable, sobem pra Opus; segurança de alto risco não fecha num modelo só (`@reviewer` acha, `@advisor` adjudica).
+- **Código nunca vai pra Haiku:** ler/entender/auditar código exige julgamento → piso Sonnet. Haiku só faz o braçal mecânico. Design e revisão não descem pra Sonnet/Haiku (rodam em Opus, com o Fable desativado); segurança de alto risco não fecha num modelo só (`@reviewer` acha, o Astra é a segunda lente, `@advisor` adjudica).
 - **Código tem dois níveis:** especificado/rotina/fan-out → `@code-worker` (Sonnet); desenvolvimento complexo/novo/correção sutil → Opus (sua sessão principal). Rebaixar dev complexo pra Sonnet custa iteração; subir boilerplate pra Opus é "Opus pra tudo". Acerte pela natureza.
